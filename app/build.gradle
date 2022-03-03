@@ -3,6 +3,7 @@ apply plugin: 'com.android.application'
 def ENV_VARIABLE_PREFIX = "SIMRA_"
 def API_ENDPOINT = "API_ENDPOINT"
 def API_VERSION = "API_VERSION"
+def NAVIGATION_ENDPOINT = "NAVIGATION_ENDPOINT"
 
 android {
     compileSdkVersion 30
@@ -25,6 +26,7 @@ android {
 
 
         buildConfigField "String", API_ENDPOINT, properties.getProperty(API_ENDPOINT) ?: "\"https://vm2.mcc.tu-berlin.de:8082/\""
+        buildConfigField "String", NAVIGATION_ENDPOINT, properties.getProperty(NAVIGATION_ENDPOINT) ?: "\"https://vm2.mcc.tu-berlin.de:5000/\""
         buildConfigField "String", API_VERSION, properties.getProperty(API_VERSION) ?: "\"12/\""
 
     }
@@ -42,6 +44,10 @@ android {
             def VAR_API_VERSION = System.getenv(ENV_VARIABLE_PREFIX + API_VERSION)
             if (VAR_API_VERSION != null) {
                 buildConfigField "String", API_VERSION, "\"" + VAR_API_VERSION + "\""
+            }
+            def VAR_NAV_ENDPOINT = System.getenv(ENV_VARIABLE_PREFIX + NAVIGATION_ENDPOINT)
+            if (VAR_NAV_ENDPOINT != null) {
+                buildConfigField "String", NAVIGATION_ENDPOINT, "\"" + VAR_NAV_ENDPOINT + "\""
             }
         }
         qa {

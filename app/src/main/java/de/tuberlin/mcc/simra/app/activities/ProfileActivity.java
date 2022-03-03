@@ -17,6 +17,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import androidx.core.content.ContextCompat;
@@ -147,6 +148,7 @@ public class ProfileActivity extends AppCompatActivity {
                             int[] nearestRegionCodes = nearestRegionsToThisLocation(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude(),
                                     locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude(),
                                     ProfileActivity.this);
+                            Log.d("Nearest region codes: ", Arrays.toString(nearestRegionCodes));
                             String[] nearestRegionNames = getCorrectRegionNames(regionsDecoder(nearestRegionCodes, ProfileActivity.this));
                             AlertDialog.Builder builder = new AlertDialog.Builder(ProfileActivity.this).setTitle(R.string.nearestRegions);
                             createButtons(builder, nearestRegionNames, regionContentArray, profile, ProfileActivity.this);
