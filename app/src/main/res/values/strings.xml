@@ -15,6 +15,7 @@
     <string name="title_activity_statistics">Statistiken</string>
     <string name="title_activity_bluetooth_connection">OpenBikeSensor</string>
     <string name="title_activity_contact">Kontakt</string>
+    <string name="title_activity_navigation">Navigation</string>
 
 
     <!--- Start -->
@@ -394,5 +395,15 @@
     <string name="link_to_instagram">https://www.instagram.com/sicherheitimradverkehr/</string>
     <string name="link_simra_Dashboard">https://simra-project.github.io/dashboard/</string>
     <string name="dashboard">Dashboard</string>
+
+
+    <!-- navigation -->
+    <string name="select_start">Startpunkt wählen</string>
+    <string name="via">Via</string>
+    <string name="select_destination">Ziel wählen</string>
+    <string name="start">Start</string>
+    <string name="location_selected">Standort ausgewählt</string>
+    <string name="navigate_from">Route von diesem Punkt</string>
+    <string name="navigate_to">Route zu diesem Punkt</string>
 
 </resources>

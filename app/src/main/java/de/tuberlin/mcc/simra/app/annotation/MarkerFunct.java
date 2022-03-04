@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
 import de.tuberlin.mcc.simra.app.activities.ShowRouteActivity;
 import de.tuberlin.mcc.simra.app.entities.DataLog;
@@ -53,7 +54,7 @@ import java9.util.stream.StreamSupport;
 public class MarkerFunct {
 
     private static final String TAG = "MarkerFunct_LOG";
-    private final String userAgent = "SimRa/alpha";
+    private final String userAgent = BuildConfig.APPLICATION_ID + "/" + BuildConfig.VERSION_NAME;
     private ShowRouteActivity activity;
     private ExecutorService pool;
     private GeocoderNominatim geocoderNominatim;
@@ -217,11 +218,11 @@ public class MarkerFunct {
     public void setMarker(IncidentLogEntry incidentLogEntry) {
         Marker incidentMarker = new Marker(activity.getmMapView());
         /** I don't know why this exists, but this removes markers when adding new markers. DSP code.
-        Marker previousMarker = markerMap.get(incidentLogEntry.key);
-        if (previousMarker != null) {
-            activity.getmMapView().getOverlays().remove(previousMarker);
-        }
-        */
+         Marker previousMarker = markerMap.get(incidentLogEntry.key);
+         if (previousMarker != null) {
+         activity.getmMapView().getOverlays().remove(previousMarker);
+         }
+         */
         // Add the marker + corresponding key to map so we can manage markers if
         // necessary (e.g., remove them)
         markerMap.put(incidentLogEntry.key, incidentMarker);

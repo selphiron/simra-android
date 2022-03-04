@@ -1,5 +1,15 @@
 package de.tuberlin.mcc.simra.app.activities;
 
+import static de.tuberlin.mcc.simra.app.entities.Profile.profileIsInUnknownRegion;
+import static de.tuberlin.mcc.simra.app.update.VersionUpdater.Legacy.Utils.getAppVersionNumber;
+import static de.tuberlin.mcc.simra.app.util.Constants.ZOOM_LEVEL;
+import static de.tuberlin.mcc.simra.app.util.SimRAuthenticator.getClientHash;
+import static de.tuberlin.mcc.simra.app.util.Utils.fireProfileRegionPrompt;
+import static de.tuberlin.mcc.simra.app.util.Utils.getNews;
+import static de.tuberlin.mcc.simra.app.util.Utils.isLocationServiceOff;
+import static de.tuberlin.mcc.simra.app.util.Utils.nearestRegionsToThisLocation;
+import static de.tuberlin.mcc.simra.app.util.Utils.overwriteFile;
+
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -32,15 +42,23 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.util.Consumer;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
 import org.osmdroid.config.Configuration;
+import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
@@ -56,11 +74,6 @@ import java.util.concurrent.Executors;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.util.Consumer;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
 import de.tuberlin.mcc.simra.app.databinding.ActivityMainBinding;
@@ -74,16 +87,6 @@ import de.tuberlin.mcc.simra.app.util.IOUtils;
 import de.tuberlin.mcc.simra.app.util.IncidentBroadcaster;
 import de.tuberlin.mcc.simra.app.util.PermissionHelper;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
-
-import static de.tuberlin.mcc.simra.app.entities.Profile.profileIsInUnknownRegion;
-import static de.tuberlin.mcc.simra.app.update.VersionUpdater.Legacy.Utils.getAppVersionNumber;
-import static de.tuberlin.mcc.simra.app.util.Constants.ZOOM_LEVEL;
-import static de.tuberlin.mcc.simra.app.util.SimRAuthenticator.getClientHash;
-import static de.tuberlin.mcc.simra.app.util.Utils.fireProfileRegionPrompt;
-import static de.tuberlin.mcc.simra.app.util.Utils.getNews;
-import static de.tuberlin.mcc.simra.app.util.Utils.isLocationServiceOff;
-import static de.tuberlin.mcc.simra.app.util.Utils.nearestRegionsToThisLocation;
-import static de.tuberlin.mcc.simra.app.util.Utils.overwriteFile;
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
@@ -242,6 +245,7 @@ public class MainActivity extends BaseActivity
         // Add overlays
         mMapView.getOverlays().add(this.mLocationOverlay);
         mMapView.getOverlays().add(mCompassOverlay);
+        mMapView.getOverlays().add(new MapEventsOverlay(mReceive));
         // mMapView.getOverlays().add(this.mRotationGestureOverlay);
 
         mLocationOverlay.setOptionsMenuEnabled(true);
@@ -279,6 +283,8 @@ public class MainActivity extends BaseActivity
             }
             startRecording();
         });
+
+        binding.appBarMain.buttonNavigate.setOnClickListener(v -> startActivity(new Intent(this, NavigationActivity.class)));
 
         Consumer<Integer> recordIncident = (incidentType) -> {
             Toast t = Toast.makeText(MainActivity.this, R.string.recorded_incident, Toast.LENGTH_SHORT);
@@ -751,7 +757,7 @@ public class MainActivity extends BaseActivity
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
         layoutParams.setMargins(10, 10, 10, 10);
         for (int i = 1; i < simRa_news_config.length; i++) {
-            if (simRa_news_config[i].startsWith("i")){
+            if (simRa_news_config[i].startsWith("i")) {
                 continue;
             }
             TextView tv = new TextView(MainActivity.this);
@@ -808,6 +814,35 @@ public class MainActivity extends BaseActivity
         }
         return true;
     }
+
+    MapEventsReceiver mReceive = new MapEventsReceiver() {
+        @Override
+        public boolean singleTapConfirmedHelper(GeoPoint p) {
+            return false;
+        }
+
+        @Override
+        public boolean longPressHelper(GeoPoint p) {
+            final AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+            alert.setTitle(R.string.location_selected);
+            alert.setNegativeButton(R.string.navigate_to, (dialog, whichButton) -> {
+                Intent i = new Intent(MainActivity.this, NavigationActivity.class);
+                i.putExtra("lat", p.getLatitude());
+                i.putExtra("lon", p.getLongitude());
+                i.putExtra("isStart", false);
+                startActivity(i);
+            });
+            alert.setPositiveButton(R.string.navigate_from, (dialog, whichButton) -> {
+                Intent i = new Intent(MainActivity.this, NavigationActivity.class);
+                i.putExtra("lat", p.getLatitude());
+                i.putExtra("lon", p.getLongitude());
+                i.putExtra("isStart", true);
+                startActivity(i);
+            });
+            alert.show();
+            return false;
+        }
+    };
 
     private class CheckVersionTask extends AsyncTask<String, String, String> {
         int installedAppVersion = -1;

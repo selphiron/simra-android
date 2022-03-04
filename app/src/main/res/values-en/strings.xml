@@ -15,6 +15,7 @@
     <string name="title_activity_statistics">Statistics</string>
     <string name="title_activity_bluetooth_connection">OpenBikeSensor</string>
     <string name="title_activity_contact">Contact</string>
+    <string name="title_activity_navigation">Navigation</string>
 
 
     <!--- Start -->
@@ -379,5 +380,14 @@
     <string name="dashboard">Dashboard</string>
     <string name="project_website">SimRa Project Website</string>
     <string name="website_link_text">www.digital-future.berlin</string>
+
+    <!-- navigation -->
+    <string name="select_start">Select start</string>
+    <string name="via">Via</string>
+    <string name="select_destination">Select destination</string>
+    <string name="start">Start</string>
+    <string name="location_selected">Location selected</string>
+    <string name="navigate_from">Navigate from this point</string>
+    <string name="navigate_to">Navigate to this point</string>
 
 </resources>
