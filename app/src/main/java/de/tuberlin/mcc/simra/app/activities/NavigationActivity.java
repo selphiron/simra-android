@@ -9,8 +9,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 
 import org.osmdroid.bonuspack.location.GeocoderNominatim;
@@ -21,10 +19,12 @@ import org.osmdroid.util.GeoPoint;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
+import de.tuberlin.mcc.simra.app.adapter.AddressPair;
 import de.tuberlin.mcc.simra.app.adapter.AutocompleteAdapter;
 import de.tuberlin.mcc.simra.app.databinding.ActivityNavigationBinding;
 import de.tuberlin.mcc.simra.app.util.BaseActivity;
@@ -39,10 +39,6 @@ public class NavigationActivity extends BaseActivity {
     private GeoPoint fromCoordinates;
     private GeoPoint viaCoordinates;
     private GeoPoint toCoordinates;
-
-    private Handler startHandler;
-    private Handler viaHandler;
-    private Handler toHandler;
 
     private final int GEO_SEARCH = 10;
 
@@ -92,13 +88,6 @@ public class NavigationActivity extends BaseActivity {
             }
         }
 
-        // handler for delayed geocoder fetching
-        startHandler = new Handler(msg -> {
-            if (msg.what == GEO_SEARCH && !TextUtils.isEmpty(binding.startLocation.getText()))
-                getAddresses(binding.startLocation.getText().toString(), binding.startLocation);
-            return false;
-        });
-
         // listener for fetching route button
         binding.startNavigationBtn.setOnClickListener(v -> {
             ArrayList<GeoPoint> pointList = new ArrayList<>();
@@ -114,14 +103,47 @@ public class NavigationActivity extends BaseActivity {
             }
         });
 
-        binding.startLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
-        binding.startLocation.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        // handlers for delayed geocoder fetching
+        Handler startHandler = getAutocompleteHandler(binding.startLocation);
+        Handler viaHandler = getAutocompleteHandler(binding.viaLocation);
+        Handler toHandler = getAutocompleteHandler(binding.destinationLocation);
 
-            }
+        // set up adapters and autocomplete views
+        binding.startLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
+        binding.startLocation.setOnItemClickListener((parent, view, position, id) -> {
+            AutocompleteAdapter adapter = (AutocompleteAdapter) parent.getAdapter();
+            fromCoordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
+            updateButtonEnabled();
         });
-        binding.startLocation.addTextChangedListener(new TextWatcher() {
+        binding.startLocation.addTextChangedListener(getAutocompleteTextWatcher(startHandler));
+
+        binding.viaLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
+        binding.viaLocation.setOnItemClickListener((parent, view, position, id) -> {
+            AutocompleteAdapter adapter = (AutocompleteAdapter) parent.getAdapter();
+            viaCoordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
+        });
+        binding.viaLocation.addTextChangedListener(getAutocompleteTextWatcher(viaHandler));
+
+        binding.destinationLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
+        binding.destinationLocation.setOnItemClickListener((parent, view, position, id) -> {
+            AutocompleteAdapter adapter = (AutocompleteAdapter) parent.getAdapter();
+            toCoordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
+            updateButtonEnabled();
+        });
+        binding.destinationLocation.addTextChangedListener(getAutocompleteTextWatcher(toHandler));
+
+    }
+
+    private Handler getAutocompleteHandler(AutoCompleteTextView textView) {
+        return new Handler(msg -> {
+            if (msg.what == GEO_SEARCH && !TextUtils.isEmpty(textView.getText()))
+                getAddresses(textView.getText().toString(), textView);
+            return false;
+        });
+    }
+
+    private TextWatcher getAutocompleteTextWatcher(Handler handler) {
+        return new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -129,27 +151,30 @@ public class NavigationActivity extends BaseActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                startHandler.removeMessages(GEO_SEARCH);
-                startHandler.sendEmptyMessageDelayed(GEO_SEARCH, 500);
+                handler.removeMessages(GEO_SEARCH);
+                handler.sendEmptyMessageDelayed(GEO_SEARCH, 500);
             }
 
             @Override
             public void afterTextChanged(Editable s) {
 
             }
-        });
+        };
+    }
 
+    private void updateButtonEnabled() {
+        binding.startNavigationBtn.setEnabled(fromCoordinates != null && toCoordinates != null);
     }
 
     private void getAddresses(String searchEntry, AutoCompleteTextView textView) {
         try {
             List<Address> results = new ReverseGeocoderTask().execute(searchEntry).get();
-            List<String> resultStrings = new ArrayList<>();
+            List<AddressPair> resultPairs = new ArrayList<>();
             for (Address adr : results) {
-                resultStrings.add(addressToString(adr));
+                resultPairs.add(new AddressPair(new GeoPoint(adr.getLatitude(), adr.getLongitude()), addressToString(adr)));
             }
             AutocompleteAdapter adapter = (AutocompleteAdapter) textView.getAdapter();
-            adapter.setSuggestions(resultStrings);
+            adapter.setSuggestions(resultPairs);
             adapter.notifyDataSetChanged();
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();

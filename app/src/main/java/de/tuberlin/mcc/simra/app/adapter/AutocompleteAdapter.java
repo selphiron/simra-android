@@ -11,10 +11,10 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AutocompleteAdapter extends ArrayAdapter<String> implements Filterable {
-    private final List<String> suggestions;
+public class AutocompleteAdapter extends ArrayAdapter<AddressPair> implements Filterable {
+    private final List<AddressPair> suggestions;
 
-    public void setSuggestions(List<String> additions) {
+    public void setSuggestions(List<AddressPair> additions) {
         suggestions.clear();
         suggestions.addAll(additions);
     }
@@ -31,7 +31,7 @@ public class AutocompleteAdapter extends ArrayAdapter<String> implements Filtera
 
     @Nullable
     @Override
-    public String getItem(int position) {
+    public AddressPair getItem(int position) {
         return suggestions.get(position);
     }
 
