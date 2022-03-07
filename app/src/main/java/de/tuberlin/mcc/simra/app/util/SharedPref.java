@@ -2,9 +2,6 @@ package de.tuberlin.mcc.simra.app.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
-
-import java.util.Arrays;
 
 /**
  * Helper for central access to all shared prefs used by the app
@@ -130,7 +127,7 @@ public class SharedPref {
     }
 
     public static void createEntry(String sharedPrefName, String line, Context context) {
-        String[] sharedPrefsEntry = line.replaceAll("<"," ").replaceAll(">"," ").replaceAll("/","").trim().split(" ");
+        String[] sharedPrefsEntry = line.replaceAll("<", " ").replaceAll(">", " ").replaceAll("/", "").trim().split(" ");
         // Log.d("SharedPref_LOG:","sharedPrefsEntry: " + Arrays.toString(sharedPrefsEntry));
         String entryType = sharedPrefsEntry[0];
         String entryName = sharedPrefsEntry[1].split("\"")[1];
@@ -175,22 +172,26 @@ public class SharedPref {
          */
         public static class News {
             private static final String LAST_SEEN_NEWS_ID = "LAST_SEEN_NEWS_ID";
+
             public static void setLastSeenNewsID(int lastSeenNewsID, Context context) {
-                writeIntegerToAppSharedPrefsAsync(LAST_SEEN_NEWS_ID,lastSeenNewsID,context);
+                writeIntegerToAppSharedPrefsAsync(LAST_SEEN_NEWS_ID, lastSeenNewsID, context);
             }
+
             public static int getLastSeenNewsID(Context context) {
-                return readIntegerFromAppSharedPrefs(LAST_SEEN_NEWS_ID,0,context);
+                return readIntegerFromAppSharedPrefs(LAST_SEEN_NEWS_ID, 0, context);
             }
         }
 
         // RIDE-KEY
         public static class RideKey {
             private static final String RIDE_KEY = "RIDE-KEY";
+
             public static void setRideKey(int lastSeenNewsID, Context context) {
-                writeIntegerToAppSharedPrefsAsync(RIDE_KEY,lastSeenNewsID,context);
+                writeIntegerToAppSharedPrefsAsync(RIDE_KEY, lastSeenNewsID, context);
             }
+
             public static int getRideKey(Context context) {
-                return readIntegerFromAppSharedPrefs(RIDE_KEY,0,context);
+                return readIntegerFromAppSharedPrefs(RIDE_KEY, 0, context);
             }
         }
 
@@ -255,19 +256,23 @@ public class SharedPref {
          */
         public static class Regions {
             private static final String LAST_REGION_NUMBER_KNOWN = "LAST_REGION_NUMBER_KNOWN";
+
             public static void setLastRegionNumberKnown(int lastRegionNumberKnown, Context context) {
-                writeIntegerToAppSharedPrefsAsync(LAST_REGION_NUMBER_KNOWN,lastRegionNumberKnown,context);
+                writeIntegerToAppSharedPrefsAsync(LAST_REGION_NUMBER_KNOWN, lastRegionNumberKnown, context);
             }
+
             public static int getLastRegionNumberKnown(Context context) {
-                return readIntegerFromAppSharedPrefs(LAST_REGION_NUMBER_KNOWN,0,context);
+                return readIntegerFromAppSharedPrefs(LAST_REGION_NUMBER_KNOWN, 0, context);
             }
 
             private static final String LAST_SEEN_REGIONS_ID = "LAST_SEEN_REGIONS_ID";
+
             public static void setLastSeenRegionsID(int lastSeenRegionsID, Context context) {
-                writeIntegerToAppSharedPrefsAsync(LAST_SEEN_REGIONS_ID,lastSeenRegionsID,context);
+                writeIntegerToAppSharedPrefsAsync(LAST_SEEN_REGIONS_ID, lastSeenRegionsID, context);
             }
+
             public static int getLastSeenRegionsID(Context context) {
-                return readIntegerFromAppSharedPrefs(LAST_SEEN_REGIONS_ID,0,context);
+                return readIntegerFromAppSharedPrefs(LAST_SEEN_REGIONS_ID, 0, context);
             }
         }
 
@@ -277,18 +282,21 @@ public class SharedPref {
         public static class RegionsPrompt {
             private static final String DO_NOT_SHOW_REGION_PROMPT = "DONT_SHOW_REGION_PROMPT";
             private static final String REGION_PROMPT_SHOWN_AFTER_V81 = "REGION_PROMPT_SHOWN_AFTER_V81";
+
             public static void setRegionPromptShownAfterV81(boolean regionPromptShown, Context context) {
-                writeBooleanToAppSharedPrefsAsync(REGION_PROMPT_SHOWN_AFTER_V81,regionPromptShown,context);
+                writeBooleanToAppSharedPrefsAsync(REGION_PROMPT_SHOWN_AFTER_V81, regionPromptShown, context);
             }
+
             public static boolean getRegionPromptShownAfterV81(Context context) {
-                return readBooleanFromAppSharedPrefs(REGION_PROMPT_SHOWN_AFTER_V81,context);
+                return readBooleanFromAppSharedPrefs(REGION_PROMPT_SHOWN_AFTER_V81, context);
             }
 
             public static void setDoNotShowRegionPrompt(boolean showRegionPrompt, Context context) {
-                writeBooleanToAppSharedPrefsAsync(DO_NOT_SHOW_REGION_PROMPT,showRegionPrompt,context);
+                writeBooleanToAppSharedPrefsAsync(DO_NOT_SHOW_REGION_PROMPT, showRegionPrompt, context);
             }
+
             public static boolean getDoNotShowRegionPrompt(Context context) {
-                return readBooleanFromAppSharedPrefs(DO_NOT_SHOW_REGION_PROMPT,context);
+                return readBooleanFromAppSharedPrefs(DO_NOT_SHOW_REGION_PROMPT, context);
             }
         }
     }
@@ -336,7 +344,7 @@ public class SharedPref {
             }
 
             public static boolean getAIEnabled(Context context) {
-                return readBooleanFromAppSharedPrefs(AI_ENABLED,  context);
+                return readBooleanFromAppSharedPrefs(AI_ENABLED, context);
             }
         }
 
@@ -366,6 +374,31 @@ public class SharedPref {
             }
 
         }
+
+        public static class Navigation {
+            public static final String NAVIGATION_SETTINGS = SETTINGS + "Navigation-";
+
+            public static final String SAFETY_SCORE = NAVIGATION_SETTINGS + "Safety-Score";
+            public static final String SURFACE_QUALITY = NAVIGATION_SETTINGS + "Surface-Quality";
+
+
+            public static void setSafetyScoreWeighting(int weighting, Context context) {
+                writeIntegerToAppSharedPrefsAsync(SAFETY_SCORE, weighting, context);
+            }
+
+            public static int getSafetyScoreWeighting(Context context) {
+                return readIntegerFromAppSharedPrefs(SAFETY_SCORE, 0, context);
+            }
+
+            public static void setSurfaceQualityWeighting(int weighting, Context context) {
+                writeIntegerToAppSharedPrefsAsync(SURFACE_QUALITY, weighting, context);
+            }
+
+            public static int getSurfaceQualityWeighting(Context context) {
+                return readIntegerFromAppSharedPrefs(SURFACE_QUALITY, 0, context);
+            }
+        }
+
 
         public static class Ride {
             public static final String RIDE = "RIDE";

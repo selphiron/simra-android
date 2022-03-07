@@ -1,5 +1,11 @@
 package de.tuberlin.mcc.simra.app.activities;
 
+import static de.tuberlin.mcc.simra.app.util.IOUtils.Directories.getBaseFolderPath;
+import static de.tuberlin.mcc.simra.app.util.IOUtils.importSimRaData;
+import static de.tuberlin.mcc.simra.app.util.IOUtils.zipto;
+import static de.tuberlin.mcc.simra.app.util.Utils.prepareDebugZip;
+import static de.tuberlin.mcc.simra.app.util.Utils.sortFileListLastModified;
+
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
@@ -14,7 +20,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
@@ -24,7 +29,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,13 +43,6 @@ import de.tuberlin.mcc.simra.app.util.IOUtils;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
 import de.tuberlin.mcc.simra.app.util.UnitHelper;
 import pl.droidsonroids.gif.GifImageView;
-
-import static de.tuberlin.mcc.simra.app.util.IOUtils.Directories.getBaseFolderPath;
-import static de.tuberlin.mcc.simra.app.util.IOUtils.importSimRaData;
-import static de.tuberlin.mcc.simra.app.util.IOUtils.zipto;
-
-import static de.tuberlin.mcc.simra.app.util.Utils.prepareDebugZip;
-import static de.tuberlin.mcc.simra.app.util.Utils.sortFileListLastModified;
 
 
 public class SettingsActivity extends BaseActivity {
@@ -91,9 +88,20 @@ public class SettingsActivity extends BaseActivity {
 
         // Slider: Distance
         updatePrivacyDistanceSlider(SharedPref.Settings.DisplayUnit.getDisplayUnit(this));
-        binding.privacyDistanceSlider.addOnChangeListener((slider, changeListener, touchChangeListener) -> {
-            SharedPref.Settings.Ride.PrivacyDistance.setDistance(Math.round(slider.getValue()), SharedPref.Settings.DisplayUnit.getDisplayUnit(this), this);
-        });
+        binding.privacyDistanceSlider.addOnChangeListener((slider, changeListener, touchChangeListener) ->
+                SharedPref.Settings.Ride.PrivacyDistance.setDistance(Math.round(slider.getValue()), SharedPref.Settings.DisplayUnit.getDisplayUnit(this), this)
+        );
+
+        // Slider: SimRa Safety Score weighting
+        binding.safetyScoreSlider.setValue(SharedPref.Settings.Navigation.getSafetyScoreWeighting(this));
+        binding.safetyScoreSlider.addOnChangeListener((slider, value, fromUser) ->
+                SharedPref.Settings.Navigation.setSafetyScoreWeighting((int) value, this)
+        );
+        // Slider: Surface Quality weighting
+        binding.surfaceQualitySlider.setValue(SharedPref.Settings.Navigation.getSurfaceQualityWeighting(this));
+        binding.surfaceQualitySlider.addOnChangeListener((slider, value, fromUser) ->
+                SharedPref.Settings.Navigation.setSurfaceQualityWeighting((int) value, this)
+        );
 
         // Select Menu: Bike Type
         Spinner bikeTypeSpinner = findViewById(R.id.bikeTypeSpinner);
@@ -169,7 +177,7 @@ public class SettingsActivity extends BaseActivity {
         binding.switchAI.setOnCheckedChangeListener((buttonView, isChecked) -> SharedPref.Settings.IncidentGenerationAIActive.setAIEnabled(isChecked, this));
 
 
-        binding.importButton.setOnClickListener(new View.OnClickListener(){
+        binding.importButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View view) {
@@ -366,14 +374,14 @@ public class SettingsActivity extends BaseActivity {
             }
         } else if (requestCode == DIRECTORY_PICKER_EXPORT && resultCode == Activity.RESULT_OK) {
             // triggers export to SimRa.zip (in a given directory)
-            zipto(SettingsActivity.this.getFilesDir().getParent(),data.getData(),SettingsActivity.this);
+            zipto(SettingsActivity.this.getFilesDir().getParent(), data.getData(), SettingsActivity.this);
         } else if (requestCode == FILE_PICKER_IMPORT && resultCode == Activity.RESULT_OK) {
             // triggers import data from given SimRa.zip
-            importSimRaData(data.getData() ,this);
+            importSimRaData(data.getData(), this);
             // reload activity so that the imported settings are shown in this view.
             loadActivity();
             // show toast that data import is completed
-            Toast.makeText(this,R.string.importDone, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.importDone, Toast.LENGTH_LONG).show();
         } else {
             if (data != null) {
                 Log.d(TAG, " requestCode: " + requestCode + " resultCode: " + resultCode + " result " + data.getData());

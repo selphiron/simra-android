@@ -405,5 +405,10 @@
     <string name="location_selected">Standort ausgewählt</string>
     <string name="navigate_from">Route von diesem Punkt</string>
     <string name="navigate_to">Route zu diesem Punkt</string>
+    <string name="navigation_settings_title">Navigationseinstellungen</string>
+    <string name="safety_score_seekbar_hint">SimRa Safety-Score Gewichtung (höher ist stärker)</string>
+    <string name="simra_weighting_max" translatable="false">10</string>
+    <string name="simra_weighting_min" translatable="false">0</string>
+    <string name="surface_quality_seekbar_hint">Oberflächenbeschaffenheit-Gewichtung (höher ist stärker)</string>
 
 </resources>
