@@ -27,6 +27,7 @@ import de.tuberlin.mcc.simra.app.R;
 import de.tuberlin.mcc.simra.app.adapter.AddressPair;
 import de.tuberlin.mcc.simra.app.adapter.AutocompleteAdapter;
 import de.tuberlin.mcc.simra.app.databinding.ActivityNavigationBinding;
+import de.tuberlin.mcc.simra.app.services.SimraNavService;
 import de.tuberlin.mcc.simra.app.util.BaseActivity;
 
 public class NavigationActivity extends BaseActivity {
@@ -219,16 +220,13 @@ public class NavigationActivity extends BaseActivity {
     }
 
     private class FetchRouteTask extends AsyncTask<ArrayList<GeoPoint>, Void, Road> {
-        GraphHopperRoadManager roadManager;
+        SimraNavService navService;
 
         @Override
         protected Road doInBackground(ArrayList<GeoPoint>... arrayLists) {
             ArrayList<GeoPoint> routePoints = arrayLists[0];
-            // empty string as we use custom endpoint
-            roadManager = new GraphHopperRoadManager("", false);
-            roadManager.setService(BuildConfig.NAVIGATION_ENDPOINT);
-            roadManager.addRequestOption("ch.disable=true");
-            return roadManager.getRoad(routePoints);
+            navService = new SimraNavService(NavigationActivity.this);
+            return navService.getRoad(routePoints);
         }
     }
 
