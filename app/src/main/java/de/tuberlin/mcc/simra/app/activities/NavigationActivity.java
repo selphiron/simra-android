@@ -1,5 +1,7 @@
 package de.tuberlin.mcc.simra.app.activities;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -7,6 +9,7 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.widget.AutoCompleteTextView;
@@ -14,7 +17,14 @@ import android.widget.AutoCompleteTextView;
 import org.osmdroid.bonuspack.location.GeocoderNominatim;
 import org.osmdroid.bonuspack.routing.GraphHopperRoadManager;
 import org.osmdroid.bonuspack.routing.Road;
+import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.CustomZoomButtonsController;
+import org.osmdroid.views.MapController;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,6 +40,8 @@ import de.tuberlin.mcc.simra.app.databinding.ActivityNavigationBinding;
 import de.tuberlin.mcc.simra.app.services.SimraNavService;
 import de.tuberlin.mcc.simra.app.util.BaseActivity;
 
+import static de.tuberlin.mcc.simra.app.util.Constants.ZOOM_LEVEL;
+
 public class NavigationActivity extends BaseActivity {
 
     private static final String TAG = "NavigationActivity_LOG";
@@ -40,6 +52,9 @@ public class NavigationActivity extends BaseActivity {
     private GeoPoint fromCoordinates;
     private GeoPoint viaCoordinates;
     private GeoPoint toCoordinates;
+
+    private MapView mapView;
+    private MapController mapController;
 
     private final int GEO_SEARCH = 10;
 
@@ -68,6 +83,16 @@ public class NavigationActivity extends BaseActivity {
         geocoderNominatim = new GeocoderNominatim(BuildConfig.APPLICATION_ID + "/" + BuildConfig.VERSION_NAME);
         geocoderNominatim.setService("https://nominatim.openstreetmap.org/");
 
+        // map config
+        mapView = binding.map;
+        mapView.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
+        mapView.setMultiTouchControls(true); // gesture zooming
+        mapView.setFlingEnabled(true);
+        mapView.setTilesScaledToDpi(true);
+
+        mapController = (MapController) mapView.getController();
+        mapController.setZoom(ZOOM_LEVEL);
+
         // if opened from map selection, set data
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -84,8 +109,16 @@ public class NavigationActivity extends BaseActivity {
                     binding.destinationLocation.setText(address);
                     toCoordinates = selectedPoint;
                 }
+                updateSearchUiWithPoint(selectedPoint);
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
+            }
+        } else {
+            SharedPreferences sharedPrefs = getSharedPreferences("simraPrefs", Context.MODE_PRIVATE);
+            if (sharedPrefs.contains("lastLoc_latitude") & sharedPrefs.contains("lastLoc_longitude")) {
+                GeoPoint lastLoc = new GeoPoint(Double.parseDouble(sharedPrefs.getString("lastLoc_latitude", "")),
+                        Double.parseDouble(sharedPrefs.getString("lastLoc_longitude", "")));
+                mapController.animateTo(lastLoc);
             }
         }
 
@@ -96,12 +129,7 @@ public class NavigationActivity extends BaseActivity {
             if (viaCoordinates != null)
                 pointList.add(viaCoordinates);
             pointList.add(toCoordinates);
-            try {
-                Road suggestedRoute = new FetchRouteTask().execute(pointList).get();
-
-            } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
+            new FetchRouteTask().execute(pointList);
         });
 
         // handlers for delayed geocoder fetching
@@ -113,23 +141,29 @@ public class NavigationActivity extends BaseActivity {
         binding.startLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
         binding.startLocation.setOnItemClickListener((parent, view, position, id) -> {
             AutocompleteAdapter adapter = (AutocompleteAdapter) parent.getAdapter();
-            fromCoordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
+            GeoPoint coordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
+            fromCoordinates = coordinates;
             updateButtonEnabled();
+            updateSearchUiWithPoint(coordinates);
         });
         binding.startLocation.addTextChangedListener(getAutocompleteTextWatcher(startHandler));
 
         binding.viaLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
         binding.viaLocation.setOnItemClickListener((parent, view, position, id) -> {
             AutocompleteAdapter adapter = (AutocompleteAdapter) parent.getAdapter();
-            viaCoordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
+            GeoPoint coordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
+            viaCoordinates = coordinates;
+            updateSearchUiWithPoint(coordinates);
         });
         binding.viaLocation.addTextChangedListener(getAutocompleteTextWatcher(viaHandler));
 
         binding.destinationLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
         binding.destinationLocation.setOnItemClickListener((parent, view, position, id) -> {
             AutocompleteAdapter adapter = (AutocompleteAdapter) parent.getAdapter();
-            toCoordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
+            GeoPoint coordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
+            toCoordinates = coordinates;
             updateButtonEnabled();
+            updateSearchUiWithPoint(coordinates);
         });
         binding.destinationLocation.addTextChangedListener(getAutocompleteTextWatcher(toHandler));
 
@@ -141,6 +175,36 @@ public class NavigationActivity extends BaseActivity {
                 getAddresses(textView.getText().toString(), textView);
             return false;
         });
+    }
+
+    private void updateSearchUiWithPoint(GeoPoint point) {
+        mapView.getOverlays().clear();
+        List<GeoPoint> pointList = new ArrayList<>();
+        if (fromCoordinates != null) {
+            pointList.add(fromCoordinates);
+            addMarker(fromCoordinates);
+        }
+        if (viaCoordinates != null) {
+            pointList.add(viaCoordinates);
+            addMarker(viaCoordinates);
+        }
+        if (toCoordinates != null) {
+            pointList.add(toCoordinates);
+            addMarker(toCoordinates);
+        }
+        if (pointList.size() > 1) {
+            BoundingBox boundingBox = BoundingBox.fromGeoPointsSafe(pointList);
+            mapView.zoomToBoundingBox(boundingBox, true);
+        } else {
+            mapController.animateTo(point);
+        }
+    }
+
+    private void addMarker(GeoPoint point) {
+        Marker marker = new Marker(mapView);
+        marker.setPosition(point);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        mapView.getOverlays().add(marker);
     }
 
     private TextWatcher getAutocompleteTextWatcher(Handler handler) {
@@ -219,15 +283,25 @@ public class NavigationActivity extends BaseActivity {
         }
     }
 
-    private class FetchRouteTask extends AsyncTask<ArrayList<GeoPoint>, Void, Road> {
+    private class FetchRouteTask extends AsyncTask<ArrayList<GeoPoint>, Void, Road[]> {
         SimraNavService navService;
 
         @Override
-        protected Road doInBackground(ArrayList<GeoPoint>... arrayLists) {
+        protected Road[] doInBackground(ArrayList<GeoPoint>... arrayLists) {
             ArrayList<GeoPoint> routePoints = arrayLists[0];
             navService = new SimraNavService(NavigationActivity.this);
-            return navService.getRoad(routePoints);
+            return navService.getRoads(routePoints);
         }
+
+        @Override
+        protected void onPostExecute(Road[] roads) {
+            updateUIWithRoads(roads);
+        }
+
+    }
+
+    private void updateUIWithRoads(Road[] roads) {
+
     }
 
     private String addressToString(Address address) {
