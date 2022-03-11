@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string-array name="direction_icons" translatable="false">
+    	<!-- this list must match exactly with maneuver IDs of
+    	http://open.mapquestapi.com/guidance/#maneuvertypes -->
+		<!-- icons from https://github.com/mapbox/directions-icons, no attribution required -->
+        <item>@drawable/ic_empty</item> <!-- 0 -->
+        <item>@drawable/direction_continue</item>
+        <item>@drawable/direction_continue</item>
+        <item>@drawable/direction_continue_slight_left</item>
+        <item>@drawable/direction_turn_left</item>
+		<item>@drawable/direction_turn_sharp_left</item> <!-- 5 -->
+		<item>@drawable/direction_continue_slight_right</item>
+		<item>@drawable/direction_turn_right</item>
+		<item>@drawable/direction_turn_sharp_right</item>
+		<item>@drawable/ic_empty</item>
+		<item>@drawable/ic_empty</item> <!-- 10 -->
+		<item>@drawable/direction_continue</item>
+		<item>@drawable/direction_uturn</item>
+		<item>@drawable/direction_uturn</item>
+		<item>@drawable/direction_uturn</item>
+		<item>@drawable/direction_continue_slight_left</item> <!-- 15 -->
+		<item>@drawable/direction_continue_slight_right</item>
+		<item>@drawable/direction_continue_slight_left</item>
+		<item>@drawable/direction_continue_slight_right</item>
+		<item>@drawable/direction_continue</item>
+		<item>@drawable/ic_empty</item> <!-- 20 -->
+		<item>@drawable/ic_empty</item>
+		<item>@drawable/ic_empty</item>
+		<item>@drawable/ic_empty</item>
+		<item>@drawable/direction_flag</item>
+		<item>@drawable/direction_flag</item> <!-- 25 -->
+		<item>@drawable/direction_flag</item>
+		<item>@drawable/direction_roundabout</item>
+		<item>@drawable/direction_roundabout</item>
+		<item>@drawable/direction_roundabout</item>
+		<item>@drawable/direction_roundabout</item> <!-- 30 -->
+		<item>@drawable/direction_roundabout</item>
+		<item>@drawable/direction_roundabout</item>
+		<item>@drawable/direction_roundabout</item>
+		<item>@drawable/direction_roundabout</item>
+		<item>@drawable/ic_empty</item> <!-- 35 -->
+		<item>@drawable/ic_empty</item>
+		<item>@drawable/ic_empty</item>
+		<item>@drawable/ic_empty</item>
+		<item>@drawable/ic_empty</item> <!-- 39 -->
+	</string-array>
+</resources>

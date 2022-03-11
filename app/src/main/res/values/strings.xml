@@ -410,5 +410,6 @@
     <string name="simra_weighting_max" translatable="false">10</string>
     <string name="simra_weighting_min" translatable="false">0</string>
     <string name="surface_quality_seekbar_hint">Oberflächenbeschaffenheit-Gewichtung (höher ist stärker)</string>
+    <string name="step">Schritt</string>
 
 </resources>

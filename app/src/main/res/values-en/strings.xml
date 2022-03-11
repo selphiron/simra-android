@@ -392,5 +392,6 @@
     <string name="navigation_settings_title">Navigation Settings</string>
     <string name="safety_score_seekbar_hint">Safety score weighting (higher means more importance)</string>
     <string name="surface_quality_seekbar_hint">Surface quality weighting (higher means more importance)</string>
+    <string name="step">Step</string>
 
 </resources>

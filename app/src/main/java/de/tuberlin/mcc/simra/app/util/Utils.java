@@ -1,5 +1,6 @@
 package de.tuberlin.mcc.simra.app.util;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.AssetManager;
@@ -7,6 +8,8 @@ import android.content.res.Resources;
 import android.location.LocationManager;
 import android.util.Log;
 import android.util.Pair;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,6 +38,7 @@ import java.util.Queue;
 import javax.net.ssl.HttpsURLConnection;
 
 import androidx.appcompat.app.AlertDialog;
+
 import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
 import de.tuberlin.mcc.simra.app.entities.DataLog;
@@ -101,7 +105,7 @@ public class Utils {
             }
         }
 
-        IncidentLog incidentLog = IncidentLog.filterIncidentLogUploadReady(IncidentLog.loadIncidentLogFromFileOnly(rideId, context),null,null,null,null,true);
+        IncidentLog incidentLog = IncidentLog.filterIncidentLogUploadReady(IncidentLog.loadIncidentLogFromFileOnly(rideId, context), null, null, null, null, true);
         String dataLog = DataLog.loadDataLog(rideId, context).toString();
 
         // content.append(incidentLog.toString());
@@ -163,7 +167,6 @@ public class Utils {
     }
 
     /**
-     *
      * @param context
      * @return String[], where each element is one news element.
      */
@@ -171,9 +174,9 @@ public class Utils {
         String locale = Resources.getSystem().getConfiguration().locale.getLanguage();
         boolean languageIsEnglish = locale.equals(new Locale("en").getLanguage());
         if (languageIsEnglish) {
-            return readContentFromFile(IOUtils.Files.getENNewsFile(context).getName(),context).split(System.lineSeparator());
+            return readContentFromFile(IOUtils.Files.getENNewsFile(context).getName(), context).split(System.lineSeparator());
         } else {
-            return readContentFromFile(IOUtils.Files.getDENewsFile(context).getName(),context).split(System.lineSeparator());
+            return readContentFromFile(IOUtils.Files.getDENewsFile(context).getName(), context).split(System.lineSeparator());
         }
     }
 
@@ -209,7 +212,7 @@ public class Utils {
             String responseString = "";
 
             URL url = new URL(BuildConfig.API_ENDPOINT + BuildConfig.API_VERSION + "classify-ride?clientHash=" + getClientHash(context)
-                    + "&bikeType=" +bike
+                    + "&bikeType=" + bike
                     + "&phoneLocation=" + pLoc);
 
             Log.d(TAG, "URL for AI-Backend: " + url.toString());
@@ -243,7 +246,7 @@ public class Utils {
                     chunkIndex += 1;
 
                     //upload timeout
-                    if(startTime + uploadTimeoutMS < System.currentTimeMillis())
+                    if (startTime + uploadTimeoutMS < System.currentTimeMillis())
                         return null;
                 }
 
@@ -280,7 +283,7 @@ public class Utils {
                 while (!allLogs.onlyGPSDataLogEntries.isEmpty() && incidentTimestamps.length() > 0 && index < allLogs.onlyGPSDataLogEntries.size()) {
                     DataLogEntry gpsLine = allLogs.onlyGPSDataLogEntries.get(index);
                     for (int i = 0; i < incidentTimestamps.length(); i++) {
-                        if(gpsLine.timestamp == incidentTimestamps.getLong(i)) {
+                        if (gpsLine.timestamp == incidentTimestamps.getLong(i)) {
                             foundIncidents.add(IncidentLogEntry.newBuilder()
                                     .withBaseInformation(gpsLine.timestamp, gpsLine.latitude, gpsLine.longitude)
                                     .withIncidentType(IncidentLogEntry.INCIDENT_TYPE.AUTO_GENERATED)
@@ -298,7 +301,7 @@ public class Utils {
             e.printStackTrace();
         }
 
-        return new Pair<>(null,-2);
+        return new Pair<>(null, -2);
     }
 
 
@@ -466,11 +469,11 @@ public class Utils {
         } catch (NumberFormatException e) {
             e.printStackTrace();
             fixRide(rideId, context);
-            Log.d(TAG,"fixed ride");
+            Log.d(TAG, "fixed ride");
             List<IncidentLogEntry> dummyEntryList = new ArrayList<>();
             IncidentLogEntry dummyIncident = IncidentLogEntry.newBuilder().withDescription("startShowRouteActivity").build();
             dummyEntryList.add(dummyIncident);
-            return new Pair<>(dummyEntryList,-1);
+            return new Pair<>(dummyEntryList, -1);
         }
 
         List<IncidentLogEntry> incidents = new ArrayList<>();
@@ -481,7 +484,7 @@ public class Utils {
             }
         }
 
-        return new Pair<>(incidents,0);
+        return new Pair<>(incidents, 0);
     }
 
     private static void fixRide(int rideId, Context context) {
@@ -494,7 +497,7 @@ public class Utils {
             fixedRideContent.append(line).append(System.lineSeparator());
             // skip to first GPS Line
             while ((line = br.readLine()) != null) {
-                if (!line.startsWith(",,")){
+                if (!line.startsWith(",,")) {
                     break;
                 }
             }
@@ -502,7 +505,7 @@ public class Utils {
             while ((line = br.readLine()) != null) {
                 fixedRideContent.append(line).append(System.lineSeparator());
             }
-            overwriteFile(fixedRideContent.toString(),IOUtils.Files.getGPSLogFile(rideId, false, context));
+            overwriteFile(fixedRideContent.toString(), IOUtils.Files.getGPSLogFile(rideId, false, context));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -512,7 +515,7 @@ public class Utils {
     public static String mergeGPSandSensorLines(Queue<DataLogEntry> gpsLines, Queue<DataLogEntry> sensorLines) {
         StringBuilder accGpsString = new StringBuilder();
 
-        while(!gpsLines.isEmpty() || !sensorLines.isEmpty()) {
+        while (!gpsLines.isEmpty() || !sensorLines.isEmpty()) {
             DataLogEntry gpsLine = gpsLines.peek();
             DataLogEntry sensorLine = sensorLines.peek();
             long gpsTS = gpsLine != null ? gpsLine.timestamp : Long.MAX_VALUE;
@@ -529,26 +532,27 @@ public class Utils {
 
     /**
      * calculates the nearest three regions to given location
-     * @param lat Latitude of current location
-     * @param lon Longitude of current location
+     *
+     * @param lat     Latitude of current location
+     * @param lon     Longitude of current location
      * @param context
      * @return int array with the nearest three regions to the location represented by their region IDs
      */
     public static int[] nearestRegionsToThisLocation(double lat, double lon, Context context) {
-        int[] result = {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
-        double[] top3Distances = {Double.MAX_VALUE,Double.MAX_VALUE,Double.MAX_VALUE};
+        int[] result = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE};
+        double[] top3Distances = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
         String[] simRa_regions_config = getRegions(context);
 
         for (int i = 0; i < simRa_regions_config.length; i++) {
             String s = simRa_regions_config[i];
-            if (s.split("=").length>3) {
+            if (s.split("=").length > 3) {
                 String latlong = s.split("=")[3];
                 double regionLat = Double.parseDouble(latlong.split(",")[0]);
                 double regionLon = Double.parseDouble(latlong.split(",")[1]);
                 GeoPoint location = new GeoPoint(lat, lon);
                 GeoPoint thisRegionCenter = new GeoPoint(regionLat, regionLon);
                 double distance = location.distanceToAsDouble(thisRegionCenter);
-                if(distance < top3Distances[0]) {
+                if (distance < top3Distances[0]) {
                     top3Distances[2] = top3Distances[1];
                     result[2] = result[1];
                     top3Distances[1] = top3Distances[0];
@@ -572,8 +576,9 @@ public class Utils {
 
     /**
      * Converts region IDs to their respective names
+     *
      * @param regionCodes int array with the region codes e.g. {2,3,5}
-     * @param context context (activity) needed for reading regions file
+     * @param context     context (activity) needed for reading regions file
      * @return string array with the region names of given int array in the same order
      */
     public static String[] regionsDecoder(int[] regionCodes, Context context) {
@@ -587,8 +592,9 @@ public class Utils {
 
     /**
      * Converts names to their respective region IDs
+     *
      * @param regionName string array with the region IDs e.g., {Berlin/Potsdam, Leipzig, Stuttgart}
-     * @param context context (activity) needed for reading regions file
+     * @param context    context (activity) needed for reading regions file
      * @return int array with the region IDs of given string array in the same order
      */
     public static int regionEncoder(String regionName, Context context) {
@@ -603,6 +609,7 @@ public class Utils {
 
     /**
      * Gets the correct region names from the region lines of the region file. German or English
+     *
      * @param regionLines a subset of getRegions()
      * @return the correct display names in a string array according to System locale.
      */
@@ -616,6 +623,7 @@ public class Utils {
 
     /**
      * Gets the correct region name from the region line of the region file. German or English
+     *
      * @param regionLine a region line from getRegions() e.g., Munich=München=München=48.13,11.57
      * @return the correct display name as a string according to System locale
      */
@@ -633,30 +641,31 @@ public class Utils {
         AlertDialog.Builder alert = new AlertDialog.Builder(context);
         alert.setTitle(context.getString(R.string.chooseRegion));
         CharSequence pleaseChooseRegionText = context.getText(R.string.pleaseChooseRegion);
-        CharSequence chosenRegion = getCorrectRegionName(regionsDecoder(new int[]{Profile.loadProfile(null, context).region},context)[0]);
+        CharSequence chosenRegion = getCorrectRegionName(regionsDecoder(new int[]{Profile.loadProfile(null, context).region}, context)[0]);
 
-        alert.setMessage( pleaseChooseRegionText + System.lineSeparator() + chosenRegion);
+        alert.setMessage(pleaseChooseRegionText + System.lineSeparator() + chosenRegion);
         // alert.setMessage(R.string.pleaseChooseRegion);
         alert.setPositiveButton(R.string.selectRegion, (dialogInterface, j) -> {
-            SharedPref.App.News.setLastSeenNewsID(regionsID,context);
-            SharedPref.App.RegionsPrompt.setRegionPromptShownAfterV81(true,context);
+            SharedPref.App.News.setLastSeenNewsID(regionsID, context);
+            SharedPref.App.RegionsPrompt.setRegionPromptShownAfterV81(true, context);
             startProfileActivityForChooseRegion(context);
         });
 
         alert.setNeutralButton(R.string.doNotShowAgain, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                SharedPref.App.RegionsPrompt.setDoNotShowRegionPrompt(true,context);
-                SharedPref.App.RegionsPrompt.setRegionPromptShownAfterV81(true,context);
-                SharedPref.App.News.setLastSeenNewsID(regionsID,context);
+                SharedPref.App.RegionsPrompt.setDoNotShowRegionPrompt(true, context);
+                SharedPref.App.RegionsPrompt.setRegionPromptShownAfterV81(true, context);
+                SharedPref.App.News.setLastSeenNewsID(regionsID, context);
             }
         });
-        alert.setNegativeButton(R.string.later,null);
+        alert.setNegativeButton(R.string.later, null);
         alert.show();
     }
 
     /**
      * checks whether location provider is enabled
+     *
      * @param locationManager
      * @return true if the gps provider is disabled, false, if it is enabled
      */
@@ -670,19 +679,19 @@ public class Utils {
         return (!gps_enabled);
     }
 
-    public static void prepareDebugZip(int mode,List<File> ridesAndAccEvents , Context context) {
+    public static void prepareDebugZip(int mode, List<File> ridesAndAccEvents, Context context) {
         List<File> filesToUpload = new ArrayList<File>(ridesAndAccEvents);
         if (mode == 2) {
             filesToUpload.clear();
         } else if (mode == 1) {
-            while (filesToUpload.size()>20) {
+            while (filesToUpload.size() > 20) {
                 filesToUpload.remove(0);
             }
         }
         filesToUpload.add(IOUtils.Files.getMetaDataFile(context));
         filesToUpload.addAll(Arrays.asList(getSharedPrefsDirectory(context).listFiles()));
         try {
-            zip(filesToUpload,new File(IOUtils.Directories.getBaseFolderPath(context) + "zip.zip"));
+            zip(filesToUpload, new File(IOUtils.Directories.getBaseFolderPath(context) + "zip.zip"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -693,11 +702,11 @@ public class Utils {
             @Override
             public int compare(File file1, File file2) {
                 long k = file1.lastModified() - file2.lastModified();
-                if(k > 0){
+                if (k > 0) {
                     return 1;
-                }else if(k == 0){
+                } else if (k == 0) {
                     return 0;
-                }else{
+                } else {
                     return -1;
                 }
             }
@@ -730,6 +739,14 @@ public class Utils {
 
         public long getTimeStamp() {
             return this.timeStamp;
+        }
+    }
+
+    public static void hideKeyboard(Activity activity) {
+        View view = activity.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 }

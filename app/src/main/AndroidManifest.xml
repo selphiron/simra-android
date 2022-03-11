@@ -33,6 +33,7 @@
         android:roundIcon="@mipmap/simra_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
         tools:replace="android:allowBackup">
         <!-- Activities -->
         <activity android:name=".activities.FeedbackActivity" />

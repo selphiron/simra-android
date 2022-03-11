@@ -15,6 +15,7 @@ import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -38,7 +39,7 @@ public class SimraNavService extends GraphHopperRoadManager {
         this.context = context;
     }
 
-    public JSONObject fetchRoute(ArrayList<GeoPoint> waypoints) throws JSONException, IOException {
+    public JSONObject fetchRoute(ArrayList<GeoPoint> waypoints) throws Exception {
         // fetch route
         URL navUrl = new URL(mServiceUrl + "routing/route");
         HttpURLConnection urlConnection = (HttpURLConnection) navUrl.openConnection();
@@ -79,6 +80,7 @@ public class SimraNavService extends GraphHopperRoadManager {
     public Road[] getRoads(ArrayList<GeoPoint> waypoints, boolean getAlternate) {
         try {
             JSONObject jRoot = fetchRoute(waypoints);
+            Log.d(TAG, "GraphHopper response: " + jRoot.toString());
             JSONArray jPaths = jRoot.optJSONArray("paths");
             if (jPaths == null || jPaths.length() == 0) {
                 return defaultRoad(waypoints);
@@ -120,7 +122,7 @@ public class SimraNavService extends GraphHopperRoadManager {
                 Log.d(BonusPackHelper.LOG_TAG, "GraphHopper.getRoads - finished");
             }
             return roads;
-        } catch (JSONException | IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return defaultRoad(waypoints);
         }
