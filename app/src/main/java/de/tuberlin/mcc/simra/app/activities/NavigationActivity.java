@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
@@ -16,10 +15,8 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.content.res.ResourcesCompat;
@@ -37,14 +34,12 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.infowindow.BasicInfoWindow;
 import org.osmdroid.views.overlay.infowindow.MarkerInfoWindow;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -83,6 +78,8 @@ public class NavigationActivity extends BaseActivity {
     protected int mSelectedRoad;
     protected Polyline[] mRoadOverlays;
     protected FolderOverlay mRoadNodeMarkers;
+
+    private enum PointType {START, VIA, END}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,7 +132,7 @@ public class NavigationActivity extends BaseActivity {
                     binding.destinationLocation.setText(address);
                     toCoordinates = selectedPoint;
                 }
-                updateSearchUiWithPoint(selectedPoint);
+                updateSearchUiWithPoint(selectedPoint, address);
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -166,18 +163,18 @@ public class NavigationActivity extends BaseActivity {
         // set up adapters and autocomplete views
         binding.startLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
         binding.startLocation.setOnItemClickListener((parent, view, position, id) -> {
-            handleSuggestionClick(parent, position, 0);
+            handleSuggestionClick(parent, position, PointType.START);
         });
         binding.startLocation.addTextChangedListener(getAutocompleteTextWatcher(startHandler));
 
         binding.viaLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
         binding.viaLocation.setOnItemClickListener((parent, view, position, id) ->
-                handleSuggestionClick(parent, position, 1));
+                handleSuggestionClick(parent, position, PointType.VIA));
         binding.viaLocation.addTextChangedListener(getAutocompleteTextWatcher(viaHandler));
 
         binding.destinationLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
         binding.destinationLocation.setOnItemClickListener((parent, view, position, id) ->
-                handleSuggestionClick(parent, position, 2));
+                handleSuggestionClick(parent, position, PointType.END));
         binding.destinationLocation.addTextChangedListener(getAutocompleteTextWatcher(toHandler));
 
         // add road markers folder to map view
@@ -186,26 +183,25 @@ public class NavigationActivity extends BaseActivity {
         mapView.getOverlays().add(mRoadNodeMarkers);
     }
 
-    private void handleSuggestionClick(AdapterView<?> parent, int position, int fieldType) {
+    private void handleSuggestionClick(AdapterView<?> parent, int position, PointType pointType) {
         Utils.hideKeyboard(this);
         AutocompleteAdapter adapter = (AutocompleteAdapter) parent.getAdapter();
-        GeoPoint coordinates = Objects.requireNonNull(adapter.getItem(position)).getCoords();
-        switch (fieldType) {
-            case 0:
+        AddressPair item = adapter.getItem(position);
+        GeoPoint coordinates = Objects.requireNonNull(item).getCoords();
+        switch (pointType) {
+            case START:
                 fromCoordinates = coordinates;
                 updateButtonEnabled();
                 break;
-            case 1:
-                viaCoordinates = coordinates;
-                break;
-            case 2:
+            case END:
                 toCoordinates = coordinates;
                 updateButtonEnabled();
                 break;
             default:
+                viaCoordinates = coordinates;
                 break;
         }
-        updateSearchUiWithPoint(coordinates);
+        updateSearchUiWithPoint(coordinates, item.toString());
     }
 
     private Handler getAutocompleteHandler(AutoCompleteTextView textView) {
@@ -216,20 +212,20 @@ public class NavigationActivity extends BaseActivity {
         });
     }
 
-    private void updateSearchUiWithPoint(GeoPoint point) {
+    private void updateSearchUiWithPoint(GeoPoint point, String address) {
         mapView.getOverlays().clear();
         List<GeoPoint> pointList = new ArrayList<>();
         if (fromCoordinates != null) {
             pointList.add(fromCoordinates);
-            addMarker(fromCoordinates);
+            addMarker(fromCoordinates, PointType.START, address);
         }
         if (viaCoordinates != null) {
             pointList.add(viaCoordinates);
-            addMarker(viaCoordinates);
+            addMarker(viaCoordinates, PointType.VIA, address);
         }
         if (toCoordinates != null) {
             pointList.add(toCoordinates);
-            addMarker(toCoordinates);
+            addMarker(toCoordinates, PointType.END, address);
         }
         if (pointList.size() > 1) {
             BoundingBox boundingBox = BoundingBox.fromGeoPointsSafe(pointList);
@@ -239,11 +235,23 @@ public class NavigationActivity extends BaseActivity {
         }
     }
 
-    private void addMarker(GeoPoint point) {
+    private void addMarker(GeoPoint point, PointType markerType, String address) {
         Marker marker = new Marker(mapView);
         marker.setPosition(point);
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        setMarkerIcon(marker, R.drawable.ic_marker, R.color.distanceMarkerDanger);
+        marker.setTitle(address);
+        int color;
+        switch (markerType) {
+            case START:
+                color = R.color.startGreen;
+                break;
+            case END:
+                color = R.color.endRed;
+                break;
+            default:
+                color = R.color.viaYellow;
+        }
+        setMarkerIcon(marker, R.drawable.ic_marker, color);
         mapView.getOverlays().add(marker);
     }
 
@@ -359,28 +367,25 @@ public class NavigationActivity extends BaseActivity {
         for (int i = 0; i < roads.length; i++) {
             Polyline roadPolyline = RoadManager.buildRoadOverlay(roads[i]);
             mRoadOverlays[i] = roadPolyline;
-            Paint p = roadPolyline.getPaint();
-            p.setPathEffect(new DashPathEffect(new float[]{10, 5}, 0));
+            roadPolyline.getOutlinePaint().setStrokeWidth(20);
             String routeDesc = roads[i].getLengthDurationText(this, -1);
             roadPolyline.setTitle("Route" + " - " + routeDesc);
             roadPolyline.setInfoWindow(new BasicInfoWindow(org.osmdroid.bonuspack.R.layout.bonuspack_bubble, mapView));
             roadPolyline.setRelatedObject(i);
-            mapOverlays.add(1, roadPolyline);
-            //we insert the road overlays at the "bottom", just above the MapEventsOverlay,
-            //to avoid covering the other overlays.
+            mapOverlays.add(0, roadPolyline);
         }
-        selectRoad(0);
+        selectRoad();
     }
 
-    void selectRoad(int roadIndex) {
-        mSelectedRoad = roadIndex;
-        putRoadNodes(mRoads[roadIndex]);
+    void selectRoad() {
+        mSelectedRoad = 0;
+        putRoadNodes(mRoads[0]);
         for (int i = 0; i < mRoadOverlays.length; i++) {
-            Paint p = mRoadOverlays[i].getPaint();
-            if (i == roadIndex)
-                p.setColor(0x800000FF); //blue
+            Paint p = mRoadOverlays[i].getOutlinePaint();
+            if (i == 0)
+                p.setColor(getColor(R.color.viaYellow));
             else
-                p.setColor(0x90666666); //grey
+                p.setColor(Color.GRAY);
         }
         mapView.invalidate();
     }
@@ -416,7 +421,8 @@ public class NavigationActivity extends BaseActivity {
             }
             nodeMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
             mRoadNodeMarkers.add(nodeMarker);
-            mapView.getOverlays().add(mRoadNodeMarkers);
+            //add road markers below waypoints, above road polyline
+            mapView.getOverlays().add(1, mRoadNodeMarkers);
         }
         iconIds.recycle();
     }
