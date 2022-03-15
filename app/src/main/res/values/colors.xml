@@ -21,4 +21,20 @@
     <color name="startGreen">#238823</color>
     <color name="viaYellow">#FFBF00</color>
     <color name="endRed">#D2222D</color>
+
+
+    <!-- scores color palette-->
+    <color name="score1">#69B34C</color>
+    <color name="score2">#ACB334</color>
+    <color name="score3">#FAB733</color>
+    <color name="score4">#FF8E15</color>
+    <color name="score5">#FF0D0D</color>
+
+    <string-array name="scoreColorScale">
+        <item>@color/score1</item>
+        <item>@color/score2</item>
+        <item>@color/score3</item>
+        <item>@color/score4</item>
+        <item>@color/score5</item>
+    </string-array>
 </resources>

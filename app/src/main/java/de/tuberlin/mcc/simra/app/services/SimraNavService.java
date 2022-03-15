@@ -15,8 +15,6 @@ import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -25,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 import de.tuberlin.mcc.simra.app.BuildConfig;
+import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
 
 public class SimraNavService extends GraphHopperRoadManager {
@@ -77,24 +76,22 @@ public class SimraNavService extends GraphHopperRoadManager {
 
 
     @Override
-    public Road[] getRoads(ArrayList<GeoPoint> waypoints, boolean getAlternate) {
+    public SimraRoad[] getRoads(ArrayList<GeoPoint> waypoints, boolean getAlternate) {
         try {
             JSONObject jRoot = fetchRoute(waypoints);
             Log.d(TAG, "GraphHopper response: " + jRoot.toString());
             JSONArray jPaths = jRoot.optJSONArray("paths");
             if (jPaths == null || jPaths.length() == 0) {
-                return defaultRoad(waypoints);
-				/*
-				road = new Road(waypoints);
-				road.mStatus = STATUS_NO_ROUTE;
-				return road;
-				*/
+                SimraRoad[] defaultRoad = (SimraRoad[]) this.defaultRoad(waypoints);
+                defaultRoad[0].mStatus = STATUS_NO_ROUTE;
+                return defaultRoad;
             }
-            Road[] roads = new Road[jPaths.length()];
+            SimraRoad[] roads = new SimraRoad[jPaths.length()];
+            // construct road paths
             for (int r = 0; r < jPaths.length(); r++) {
                 JSONObject jPath = jPaths.getJSONObject(r);
                 String route_geometry = jPath.getString("points");
-                Road road = new Road();
+                SimraRoad road = new SimraRoad();
                 roads[r] = road;
                 road.mRouteHigh = PolylineEncoder.decode(route_geometry, 10, mWithElevation);
                 JSONArray jInstructions = jPath.getJSONArray("instructions");
@@ -119,12 +116,51 @@ public class SimraNavService extends GraphHopperRoadManager {
                         jBBox.getDouble(1), jBBox.getDouble(0));
                 road.mStatus = Road.STATUS_OK;
                 road.buildLegs(waypoints);
+                // add surface and safety score details to road
+                JSONObject jDetails = jPath.getJSONObject("details");
+                road.safetyScoreSegmentValues = handleDetails(jDetails.getJSONArray("safety_score"), false, n);
+                road.simraSurfaceQualitySegmentValues = handleDetails(jDetails.getJSONArray("simra_surface_quality"), false, n);
+                road.osmSurfaceQualitySegmentValues = handleDetails(jDetails.getJSONArray("surface"), true, n);
+
                 Log.d(BonusPackHelper.LOG_TAG, "GraphHopper.getRoads - finished");
             }
             return roads;
         } catch (Exception e) {
             e.printStackTrace();
-            return defaultRoad(waypoints);
+            return (SimraRoad[]) defaultRoad(waypoints);
+        }
+    }
+
+    private int[] handleDetails(JSONArray details, boolean isSurface, int pathLength) throws JSONException {
+        int[] values = new int[pathLength - 1];
+        for (int i = 0; i < details.length(); i++) {
+            JSONArray detail = details.getJSONArray(i);
+            // a detail entry is a 3-item array like such: [start, end, value]
+            int startIndex = detail.getInt(0);
+            int endIndex = detail.getInt(1);
+            int value;
+            if (isSurface) {
+                value = detail.getInt(2);
+            } else {
+                String surfaceType = detail.getString(2);
+                value = getSurfaceValue(surfaceType);
+            }
+            // add the given value to the values array using their respective start/end indices
+            for (int j = startIndex; j < endIndex; j++) {
+                values[j] = value;
+            }
+        }
+        return values;
+    }
+
+    private int getSurfaceValue(String surfaceType) {
+        switch (surfaceType) {
+            case "gravel":
+                return 3;
+            case "unpaved":
+                return 2;
+            default:
+                return 1;
         }
     }
 }

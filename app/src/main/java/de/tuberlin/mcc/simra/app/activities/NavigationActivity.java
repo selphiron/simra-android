@@ -1,5 +1,7 @@
 package de.tuberlin.mcc.simra.app.activities;
 
+import static de.tuberlin.mcc.simra.app.util.Constants.ZOOM_LEVEL;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
@@ -34,7 +36,9 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.PaintList;
 import org.osmdroid.views.overlay.Polyline;
+import org.osmdroid.views.overlay.advancedpolyline.PolychromaticPaintList;
 import org.osmdroid.views.overlay.infowindow.BasicInfoWindow;
 import org.osmdroid.views.overlay.infowindow.MarkerInfoWindow;
 
@@ -49,11 +53,11 @@ import de.tuberlin.mcc.simra.app.R;
 import de.tuberlin.mcc.simra.app.adapter.AddressPair;
 import de.tuberlin.mcc.simra.app.adapter.AutocompleteAdapter;
 import de.tuberlin.mcc.simra.app.databinding.ActivityNavigationBinding;
+import de.tuberlin.mcc.simra.app.entities.ScoreColorList;
+import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 import de.tuberlin.mcc.simra.app.services.SimraNavService;
 import de.tuberlin.mcc.simra.app.util.BaseActivity;
 import de.tuberlin.mcc.simra.app.util.Utils;
-
-import static de.tuberlin.mcc.simra.app.util.Constants.ZOOM_LEVEL;
 
 /**
  * Based on OSMNavigator MapActivity. License contained within application.
@@ -74,7 +78,7 @@ public class NavigationActivity extends BaseActivity {
 
     private final int GEO_SEARCH = 10;
 
-    public static Road[] mRoads;  //made static to pass between activities
+    public static SimraRoad[] mRoads;  //made static to pass between activities
     protected int mSelectedRoad;
     protected Polyline[] mRoadOverlays;
     protected FolderOverlay mRoadNodeMarkers;
@@ -331,18 +335,18 @@ public class NavigationActivity extends BaseActivity {
         }
     }
 
-    private class FetchRouteTask extends AsyncTask<ArrayList<GeoPoint>, Void, Road[]> {
+    private class FetchRouteTask extends AsyncTask<ArrayList<GeoPoint>, Void, SimraRoad[]> {
         SimraNavService navService;
 
         @Override
-        protected Road[] doInBackground(ArrayList<GeoPoint>... arrayLists) {
+        protected SimraRoad[] doInBackground(ArrayList<GeoPoint>... arrayLists) {
             ArrayList<GeoPoint> routePoints = arrayLists[0];
             navService = new SimraNavService(NavigationActivity.this);
-            return navService.getRoads(routePoints);
+            return navService.getRoads(routePoints, false);
         }
 
         @Override
-        protected void onPostExecute(Road[] roads) {
+        protected void onPostExecute(SimraRoad[] roads) {
             mRoads = roads;
             updateUIWithRoads(roads);
         }
@@ -357,8 +361,6 @@ public class NavigationActivity extends BaseActivity {
             for (Polyline mRoadOverlay : mRoadOverlays) mapOverlays.remove(mRoadOverlay);
             mRoadOverlays = null;
         }
-        if (roads == null)
-            return;
         if (roads[0].mStatus == Road.STATUS_TECHNICAL_ISSUE)
             Toast.makeText(mapView.getContext(), "Technical issue when getting the route", Toast.LENGTH_SHORT).show();
         else if (roads[0].mStatus > Road.STATUS_TECHNICAL_ISSUE) //functional issues
@@ -382,8 +384,13 @@ public class NavigationActivity extends BaseActivity {
         putRoadNodes(mRoads[0]);
         for (int i = 0; i < mRoadOverlays.length; i++) {
             Paint p = mRoadOverlays[i].getOutlinePaint();
+            PaintList pList = new PolychromaticPaintList(
+                    p,
+                    new ScoreColorList(mRoads[0], ScoreColorList.ScoreType.SAFETY, this), //TODO(dk): add selector for coloring type
+                    false
+            );
             if (i == 0)
-                p.setColor(getColor(R.color.viaYellow));
+                mRoadOverlays[0].getOutlinePaintLists().add(pList);
             else
                 p.setColor(Color.GRAY);
         }
