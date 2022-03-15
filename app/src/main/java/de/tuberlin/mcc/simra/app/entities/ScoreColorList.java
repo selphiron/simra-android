@@ -28,6 +28,9 @@ public class ScoreColorList implements ColorMapping {
 
     @Override
     public int getColorForIndex(int pSegmentIndex) {
+        if (osmSurfaceValuesList == null || simraSurfaceQualityList == null || safetyScoreList == null) {
+            return context.getColor(R.color.simraBlue);
+        }
         switch (selectedType) {
             case SAFETY:
                 return getSafetyScoreColor(safetyScoreList[pSegmentIndex]);

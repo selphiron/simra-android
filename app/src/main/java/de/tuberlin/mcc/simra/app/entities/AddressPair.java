@@ -1,4 +1,4 @@
-package de.tuberlin.mcc.simra.app.adapter;
+package de.tuberlin.mcc.simra.app.entities;
 
 import androidx.annotation.NonNull;
 

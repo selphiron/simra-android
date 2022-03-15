@@ -63,6 +63,7 @@ public class SimraNavService extends GraphHopperRoadManager {
         JSONObject json = new JSONObject();
         json.put("safety_weight", SharedPref.Settings.Navigation.getSafetyScoreWeighting(context));
         json.put("street_condition_weight", SharedPref.Settings.Navigation.getSurfaceQualityWeighting(context));
+        json.put("use_simra_surface_quality", SharedPref.Settings.Navigation.getSimraSurfaceQualityEnabled(context));
         JSONArray points = new JSONArray();
         for (GeoPoint point : waypoints) {
             JSONObject waypoint = new JSONObject();
@@ -74,6 +75,12 @@ public class SimraNavService extends GraphHopperRoadManager {
         return json;
     }
 
+    protected SimraRoad[] defaultRoad(ArrayList<GeoPoint> waypoints) {
+        SimraRoad[] roads = new SimraRoad[1];
+        roads[0] = new SimraRoad(waypoints);
+        return roads;
+    }
+
 
     @Override
     public SimraRoad[] getRoads(ArrayList<GeoPoint> waypoints, boolean getAlternate) {
@@ -82,7 +89,7 @@ public class SimraNavService extends GraphHopperRoadManager {
             Log.d(TAG, "GraphHopper response: " + jRoot.toString());
             JSONArray jPaths = jRoot.optJSONArray("paths");
             if (jPaths == null || jPaths.length() == 0) {
-                SimraRoad[] defaultRoad = (SimraRoad[]) this.defaultRoad(waypoints);
+                SimraRoad[] defaultRoad = this.defaultRoad(waypoints);
                 defaultRoad[0].mStatus = STATUS_NO_ROUTE;
                 return defaultRoad;
             }
@@ -127,7 +134,7 @@ public class SimraNavService extends GraphHopperRoadManager {
             return roads;
         } catch (Exception e) {
             e.printStackTrace();
-            return (SimraRoad[]) defaultRoad(waypoints);
+            return defaultRoad(waypoints);
         }
     }
 
@@ -147,6 +154,9 @@ public class SimraNavService extends GraphHopperRoadManager {
             }
             // add the given value to the values array using their respective start/end indices
             for (int j = startIndex; j < endIndex; j++) {
+                // exit loop when end of the values array is reached
+                if (j == details.length())
+                    break;
                 values[j] = value;
             }
         }

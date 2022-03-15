@@ -393,5 +393,6 @@
     <string name="safety_score_seekbar_hint">Safety score weighting (higher means more importance)</string>
     <string name="surface_quality_seekbar_hint">Surface quality weighting (higher means more importance)</string>
     <string name="step">Step</string>
+    <string name="enable_simra_surface_hint">Use SimRa data for surface quality weighting</string>
 
 </resources>

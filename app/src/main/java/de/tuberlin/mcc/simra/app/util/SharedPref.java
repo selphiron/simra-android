@@ -380,6 +380,7 @@ public class SharedPref {
 
             public static final String SAFETY_SCORE = NAVIGATION_SETTINGS + "Safety-Score";
             public static final String SURFACE_QUALITY = NAVIGATION_SETTINGS + "Surface-Quality";
+            public static final String SIMRA_SURFACE_QUALITY_ENABLED = NAVIGATION_SETTINGS + "Surface-Quality-Enabled";
 
 
             public static void setSafetyScoreWeighting(int weighting, Context context) {
@@ -396,6 +397,14 @@ public class SharedPref {
 
             public static int getSurfaceQualityWeighting(Context context) {
                 return readIntegerFromAppSharedPrefs(SURFACE_QUALITY, 0, context);
+            }
+
+            public static boolean getSimraSurfaceQualityEnabled(Context context) {
+                return readBooleanFromAppSharedPrefs(SIMRA_SURFACE_QUALITY_ENABLED, context);
+            }
+
+            public static void setSimraSurfaceQualityEnabled(boolean enabled, Context context) {
+                writeBooleanToAppSharedPrefsAsync(SIMRA_SURFACE_QUALITY_ENABLED, enabled, context);
             }
         }
 

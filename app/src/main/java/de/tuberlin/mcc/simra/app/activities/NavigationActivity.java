@@ -50,9 +50,9 @@ import java.util.concurrent.ExecutionException;
 
 import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
-import de.tuberlin.mcc.simra.app.adapter.AddressPair;
 import de.tuberlin.mcc.simra.app.adapter.AutocompleteAdapter;
 import de.tuberlin.mcc.simra.app.databinding.ActivityNavigationBinding;
+import de.tuberlin.mcc.simra.app.entities.AddressPair;
 import de.tuberlin.mcc.simra.app.entities.ScoreColorList;
 import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 import de.tuberlin.mcc.simra.app.services.SimraNavService;

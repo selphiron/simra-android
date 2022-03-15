@@ -411,5 +411,6 @@
     <string name="simra_weighting_min" translatable="false">0</string>
     <string name="surface_quality_seekbar_hint">Oberflächenbeschaffenheit-Gewichtung (höher ist stärker)</string>
     <string name="step">Schritt</string>
+    <string name="enable_simra_surface_hint">Verwenden von SimRa-Daten für Gewichtung der Oberflächenbeschaffenheit</string>
 
 </resources>
