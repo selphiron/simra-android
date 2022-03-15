@@ -401,7 +401,7 @@
     <string name="select_start">Startpunkt wählen</string>
     <string name="via">Via</string>
     <string name="select_destination">Ziel wählen</string>
-    <string name="start">Start</string>
+    <string name="get_route">Route berechnen</string>
     <string name="location_selected">Standort ausgewählt</string>
     <string name="navigate_from">Route von diesem Punkt</string>
     <string name="navigate_to">Route zu diesem Punkt</string>
@@ -412,8 +412,11 @@
     <string name="surface_quality_seekbar_hint">Oberflächenbeschaffenheit-Gewichtung (höher ist stärker)</string>
     <string name="step">Schritt</string>
     <string name="enable_simra_surface_hint">Verwenden von SimRa-Daten für Gewichtung der Oberflächenbeschaffenheit</string>
+    <string name="start">Start</string>
+    <string name="route">Route</string>
     <!-- menu options for visualization-->
     <string name="option_none">None</string>
     <string name="option_simra_safety_score">SimRa Safety-Score</string>
     <string name="option_surface_quality">Oberfläschenbeschaffenheit</string>
+    <string name="route_error">Fehler beim Abrufen der Route</string>
 </resources>

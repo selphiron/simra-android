@@ -14,16 +14,45 @@
         android:layout_marginTop="@dimen/toolbar_space">
 
         <Button
-            android:id="@+id/startNavigationBtn"
+            android:id="@+id/getRouteBtn"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:layout_gravity="center"
             android:layout_marginBottom="8dp"
             android:enabled="false"
+            android:text="@string/get_route"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:visibility="invisible" />
+
+        <Button
+            android:id="@+id/cancelButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:text="@string/cancel"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/startNavigationBtn"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Button
+            android:id="@+id/startNavigationBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"
+            tools:visibility="visible"
             android:text="@string/start"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/cancelButton" />
 
         <LinearLayout
             android:id="@+id/searchFields"
@@ -67,16 +96,27 @@
                 android:minHeight="48dp" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/durationText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_chainStyle="spread_inside"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/searchFields"
+            tools:text="15min" />
+
         <FrameLayout
             android:id="@+id/mapContainer"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
-            app:layout_constraintBottom_toTopOf="@+id/startNavigationBtn"
+            app:layout_constraintBottom_toTopOf="@+id/getRouteBtn"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/searchFields">
+            app:layout_constraintTop_toBottomOf="@+id/durationText">
 
             <org.osmdroid.views.MapView
                 android:id="@+id/map"
@@ -85,14 +125,14 @@
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/routeVisualizerSelector"
-                tools:visibility="visible"
-                android:visibility="gone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|start"
                 android:layout_margin="8dp"
                 android:src="@drawable/ic_layers"
-                tools:ignore="ContentDescription" />
+                android:visibility="gone"
+                tools:ignore="ContentDescription"
+                tools:visibility="visible" />
         </FrameLayout>
 
 

@@ -153,7 +153,7 @@ public class NavigationActivity extends BaseActivity {
         }
 
         // listener for fetching route button
-        binding.startNavigationBtn.setOnClickListener(v -> {
+        binding.getRouteBtn.setOnClickListener(v -> {
             ArrayList<GeoPoint> pointList = new ArrayList<>();
             pointList.add(fromCoordinates);
             if (viaCoordinates != null)
@@ -184,6 +184,14 @@ public class NavigationActivity extends BaseActivity {
             });
             popup.inflate(R.menu.menu_route_visualizer_options);
             popup.show();
+        });
+
+        // listener for route cancel button
+        binding.cancelButton.setOnClickListener(v -> toggleButtons(false));
+
+        // listener for starting navigation
+        binding.startNavigationBtn.setOnClickListener(v -> {
+            // TODO(dk): implement navigation
         });
 
         // handlers for delayed geocoder fetching
@@ -307,7 +315,7 @@ public class NavigationActivity extends BaseActivity {
     }
 
     private void updateButtonEnabled() {
-        binding.startNavigationBtn.setEnabled(fromCoordinates != null && toCoordinates != null);
+        binding.getRouteBtn.setEnabled(fromCoordinates != null && toCoordinates != null);
     }
 
     private void getAddresses(String searchEntry, AutoCompleteTextView textView) {
@@ -381,6 +389,12 @@ public class NavigationActivity extends BaseActivity {
     }
 
     private void updateUIWithRoads(Road[] roads) {
+        // exit prematurely if error occurs
+        if (roads[0].mStatus >= Road.STATUS_TECHNICAL_ISSUE || roads[0].mStatus == Road.STATUS_INVALID) {
+            Toast.makeText(mapView.getContext(), getString(R.string.route_error), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        toggleButtons(true);
         Log.d(TAG, "road count: " + roads.length);
         mRoadNodeMarkers.getItems().clear();
         List<Overlay> mapOverlays = mapView.getOverlays();
@@ -388,23 +402,14 @@ public class NavigationActivity extends BaseActivity {
             for (Polyline mRoadOverlay : mRoadOverlays) mapOverlays.remove(mRoadOverlay);
             mRoadOverlays = null;
         }
-        if (roads[0].mStatus == Road.STATUS_TECHNICAL_ISSUE) {
-            Toast.makeText(mapView.getContext(), "Technical issue when getting the route", Toast.LENGTH_SHORT).show();
-            binding.routeVisualizerSelector.setVisibility(View.GONE);
-        } else if (roads[0].mStatus > Road.STATUS_TECHNICAL_ISSUE) {
-            Toast.makeText(mapView.getContext(), "No possible route here", Toast.LENGTH_SHORT).show();
-            binding.routeVisualizerSelector.setVisibility(View.GONE);
-        }
         mRoadOverlays = new Polyline[roads.length];
-        if (roads[0].mStatus == Road.STATUS_OK) {
-            binding.routeVisualizerSelector.setVisibility(View.VISIBLE);
-        }
         for (int i = 0; i < roads.length; i++) {
             Polyline roadPolyline = RoadManager.buildRoadOverlay(roads[i]);
             mRoadOverlays[i] = roadPolyline;
             roadPolyline.getOutlinePaint().setStrokeWidth(20);
             String routeDesc = roads[i].getLengthDurationText(this, -1);
-            roadPolyline.setTitle("Route" + " - " + routeDesc);
+            binding.durationText.setText(routeDesc);
+            roadPolyline.setTitle(getString(R.string.route) + " - " + routeDesc);
             roadPolyline.setInfoWindow(new BasicInfoWindow(org.osmdroid.bonuspack.R.layout.bonuspack_bubble, mapView));
             roadPolyline.setRelatedObject(i);
             mapOverlays.add(0, roadPolyline);
@@ -466,6 +471,28 @@ public class NavigationActivity extends BaseActivity {
             mapView.getOverlays().add(1, mRoadNodeMarkers);
         }
         iconIds.recycle();
+    }
+
+    private void toggleButtons(boolean routeFetched) {
+        if (routeFetched) {
+            binding.getRouteBtn.setVisibility(View.INVISIBLE);
+            binding.startNavigationBtn.setVisibility(View.VISIBLE);
+            binding.cancelButton.setVisibility(View.VISIBLE);
+            binding.routeVisualizerSelector.setVisibility(View.VISIBLE);
+        } else {
+            binding.getRouteBtn.setVisibility(View.VISIBLE);
+            binding.startNavigationBtn.setVisibility(View.GONE);
+            binding.cancelButton.setVisibility(View.GONE);
+            binding.routeVisualizerSelector.setVisibility(View.GONE);
+            // reset route information values
+            binding.durationText.setText(null);
+            mRoadNodeMarkers.getItems().clear();
+            List<Overlay> mapOverlays = mapView.getOverlays();
+            if (mRoadOverlays != null) {
+                for (Polyline mRoadOverlay : mRoadOverlays) mapOverlays.remove(mRoadOverlay);
+                mRoadOverlays = null;
+            }
+        }
     }
 
     private String addressToString(Address address) {

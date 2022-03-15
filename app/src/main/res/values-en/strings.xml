@@ -385,7 +385,7 @@
     <string name="select_start">Select start</string>
     <string name="via">Via</string>
     <string name="select_destination">Select destination</string>
-    <string name="start">Start</string>
+    <string name="get_route">Get route</string>
     <string name="location_selected">Location selected</string>
     <string name="navigate_from">Navigate from this point</string>
     <string name="navigate_to">Navigate to this point</string>
@@ -394,8 +394,11 @@
     <string name="surface_quality_seekbar_hint">Surface quality weighting (higher means more importance)</string>
     <string name="step">Step</string>
     <string name="enable_simra_surface_hint">Use SimRa data for surface quality weighting</string>
+    <string name="start">Start</string>
+    <string name="route">Route</string>
     <!-- menu options for visualization-->
     <string name="option_none">None</string>
     <string name="option_simra_safety_score">SimRa safety score</string>
     <string name="option_surface_quality">Surface quality</string>
+    <string name="route_error">Issue when getting the route</string>
 </resources>
