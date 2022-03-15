@@ -412,5 +412,8 @@
     <string name="surface_quality_seekbar_hint">Oberflächenbeschaffenheit-Gewichtung (höher ist stärker)</string>
     <string name="step">Schritt</string>
     <string name="enable_simra_surface_hint">Verwenden von SimRa-Daten für Gewichtung der Oberflächenbeschaffenheit</string>
-
+    <!-- menu options for visualization-->
+    <string name="option_none">None</string>
+    <string name="option_simra_safety_score">SimRa Safety-Score</string>
+    <string name="option_surface_quality">Oberfläschenbeschaffenheit</string>
 </resources>

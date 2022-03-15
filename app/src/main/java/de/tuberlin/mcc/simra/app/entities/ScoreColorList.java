@@ -10,7 +10,7 @@ import de.tuberlin.mcc.simra.app.R;
 
 public class ScoreColorList implements ColorMapping {
 
-    public enum ScoreType {SURFACE_SIMRA, SURFACE_OSM, SAFETY}
+    public enum ScoreType {NONE, SURFACE_SIMRA, SURFACE_OSM, SAFETY}
 
     private final Context context;
 
@@ -39,7 +39,7 @@ public class ScoreColorList implements ColorMapping {
             case SURFACE_SIMRA:
                 return getSurfaceQualityColor(simraSurfaceQualityList[pSegmentIndex]);
             default:
-                return context.getColor(R.color.score1);
+                return context.getColor(R.color.simraBlue);
         }
     }
 

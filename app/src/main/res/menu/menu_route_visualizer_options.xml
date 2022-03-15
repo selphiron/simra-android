@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/option_none"
+        android:title="@string/option_none" />
+    <item
+        android:id="@+id/option_safety_score"
+        android:title="@string/option_simra_safety_score" />
+    <item
+        android:id="@+id/option_surface_quality"
+        android:title="@string/option_surface_quality" />
+</menu>

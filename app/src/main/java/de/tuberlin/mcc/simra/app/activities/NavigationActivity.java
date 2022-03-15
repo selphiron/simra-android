@@ -17,8 +17,10 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.core.content.res.ResourcesCompat;
@@ -57,6 +59,7 @@ import de.tuberlin.mcc.simra.app.entities.ScoreColorList;
 import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 import de.tuberlin.mcc.simra.app.services.SimraNavService;
 import de.tuberlin.mcc.simra.app.util.BaseActivity;
+import de.tuberlin.mcc.simra.app.util.SharedPref;
 import de.tuberlin.mcc.simra.app.util.Utils;
 
 /**
@@ -157,6 +160,30 @@ public class NavigationActivity extends BaseActivity {
                 pointList.add(viaCoordinates);
             pointList.add(toCoordinates);
             new FetchRouteTask().execute(pointList);
+        });
+
+        // listener for route appearance selection button
+        binding.routeVisualizerSelector.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(this, v);
+            popup.setOnMenuItemClickListener(item -> {
+                int itemId = item.getItemId();
+                if (itemId == R.id.option_none) {
+                    selectRoad(ScoreColorList.ScoreType.NONE);
+                    return true;
+                } else if (itemId == R.id.option_safety_score) {
+                    selectRoad(ScoreColorList.ScoreType.SAFETY);
+                    return true;
+                } else if (itemId == R.id.option_surface_quality) {
+                    boolean simraEnabled = SharedPref.Settings.Navigation.getSimraSurfaceQualityEnabled(this);
+                    ScoreColorList.ScoreType surfaceType = ScoreColorList.ScoreType.SURFACE_OSM;
+                    if (simraEnabled)
+                        surfaceType = ScoreColorList.ScoreType.SURFACE_SIMRA;
+                    selectRoad(surfaceType);
+                    return true;
+                } else return false;
+            });
+            popup.inflate(R.menu.menu_route_visualizer_options);
+            popup.show();
         });
 
         // handlers for delayed geocoder fetching
@@ -361,11 +388,17 @@ public class NavigationActivity extends BaseActivity {
             for (Polyline mRoadOverlay : mRoadOverlays) mapOverlays.remove(mRoadOverlay);
             mRoadOverlays = null;
         }
-        if (roads[0].mStatus == Road.STATUS_TECHNICAL_ISSUE)
+        if (roads[0].mStatus == Road.STATUS_TECHNICAL_ISSUE) {
             Toast.makeText(mapView.getContext(), "Technical issue when getting the route", Toast.LENGTH_SHORT).show();
-        else if (roads[0].mStatus > Road.STATUS_TECHNICAL_ISSUE) //functional issues
+            binding.routeVisualizerSelector.setVisibility(View.GONE);
+        } else if (roads[0].mStatus > Road.STATUS_TECHNICAL_ISSUE) {
             Toast.makeText(mapView.getContext(), "No possible route here", Toast.LENGTH_SHORT).show();
+            binding.routeVisualizerSelector.setVisibility(View.GONE);
+        }
         mRoadOverlays = new Polyline[roads.length];
+        if (roads[0].mStatus == Road.STATUS_OK) {
+            binding.routeVisualizerSelector.setVisibility(View.VISIBLE);
+        }
         for (int i = 0; i < roads.length; i++) {
             Polyline roadPolyline = RoadManager.buildRoadOverlay(roads[i]);
             mRoadOverlays[i] = roadPolyline;
@@ -376,17 +409,18 @@ public class NavigationActivity extends BaseActivity {
             roadPolyline.setRelatedObject(i);
             mapOverlays.add(0, roadPolyline);
         }
-        selectRoad();
+        selectRoad(ScoreColorList.ScoreType.NONE);
     }
 
-    void selectRoad() {
+    void selectRoad(ScoreColorList.ScoreType scoreType) {
+        mRoadOverlays[0].getOutlinePaintLists().clear();
         mSelectedRoad = 0;
         putRoadNodes(mRoads[0]);
         for (int i = 0; i < mRoadOverlays.length; i++) {
             Paint p = mRoadOverlays[i].getOutlinePaint();
             PaintList pList = new PolychromaticPaintList(
                     p,
-                    new ScoreColorList(mRoads[0], ScoreColorList.ScoreType.SURFACE_SIMRA, this), //TODO(dk): add selector for coloring type
+                    new ScoreColorList(mRoads[0], scoreType, this),
                     false
             );
             if (i == 0)

@@ -394,5 +394,8 @@
     <string name="surface_quality_seekbar_hint">Surface quality weighting (higher means more importance)</string>
     <string name="step">Step</string>
     <string name="enable_simra_surface_hint">Use SimRa data for surface quality weighting</string>
-
+    <!-- menu options for visualization-->
+    <string name="option_none">None</string>
+    <string name="option_simra_safety_score">SimRa safety score</string>
+    <string name="option_surface_quality">Surface quality</string>
 </resources>
