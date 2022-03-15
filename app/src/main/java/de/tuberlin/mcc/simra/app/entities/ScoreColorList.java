@@ -45,6 +45,8 @@ public class ScoreColorList implements ColorMapping {
 
     private int getSurfaceQualityColor(int value) {
         TypedArray colorScale = context.getResources().obtainTypedArray(R.array.scoreColorScale);
+        if (value == 0)
+            return colorScale.getColor(0, context.getColor(R.color.score1));
         int color = colorScale.getColor(value - 1, context.getColor(R.color.score1));
         colorScale.recycle();
         return color;

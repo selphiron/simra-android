@@ -103,7 +103,7 @@ public class SettingsActivity extends BaseActivity {
                 SharedPref.Settings.Navigation.setSurfaceQualityWeighting((int) value, this)
         );
         // Checkbox: Use SimRa weighting for surface quality
-        binding.simraSurfaceEnabledCheckbox.setEnabled(SharedPref.Settings.Navigation.getSimraSurfaceQualityEnabled(this));
+        binding.simraSurfaceEnabledCheckbox.setChecked(SharedPref.Settings.Navigation.getSimraSurfaceQualityEnabled(this));
         binding.simraSurfaceEnabledCheckbox.setOnCheckedChangeListener((buttonView, isChecked) ->
                 SharedPref.Settings.Navigation.setSimraSurfaceQualityEnabled(isChecked, this)
         );

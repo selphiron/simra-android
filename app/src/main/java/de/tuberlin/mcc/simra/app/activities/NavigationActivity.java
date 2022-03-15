@@ -386,7 +386,7 @@ public class NavigationActivity extends BaseActivity {
             Paint p = mRoadOverlays[i].getOutlinePaint();
             PaintList pList = new PolychromaticPaintList(
                     p,
-                    new ScoreColorList(mRoads[0], ScoreColorList.ScoreType.SAFETY, this), //TODO(dk): add selector for coloring type
+                    new ScoreColorList(mRoads[0], ScoreColorList.ScoreType.SURFACE_SIMRA, this), //TODO(dk): add selector for coloring type
                     false
             );
             if (i == 0)

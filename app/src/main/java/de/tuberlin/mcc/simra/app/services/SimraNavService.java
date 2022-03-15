@@ -125,9 +125,10 @@ public class SimraNavService extends GraphHopperRoadManager {
                 road.buildLegs(waypoints);
                 // add surface and safety score details to road
                 JSONObject jDetails = jPath.getJSONObject("details");
-                road.safetyScoreSegmentValues = handleDetails(jDetails.getJSONArray("safety_score"), false, n);
-                road.simraSurfaceQualitySegmentValues = handleDetails(jDetails.getJSONArray("simra_surface_quality"), false, n);
-                road.osmSurfaceQualitySegmentValues = handleDetails(jDetails.getJSONArray("surface"), true, n);
+                int segmentCount = road.mRouteHigh.size();
+                road.safetyScoreSegmentValues = handleDetails(jDetails.getJSONArray("safety_score"), false, segmentCount);
+                road.simraSurfaceQualitySegmentValues = handleDetails(jDetails.getJSONArray("simra_surface_quality"), false, segmentCount);
+                road.osmSurfaceQualitySegmentValues = handleDetails(jDetails.getJSONArray("surface"), true, segmentCount);
 
                 Log.d(BonusPackHelper.LOG_TAG, "GraphHopper.getRoads - finished");
             }
@@ -147,14 +148,14 @@ public class SimraNavService extends GraphHopperRoadManager {
             int endIndex = detail.getInt(1);
             int value;
             if (isSurface) {
-                value = detail.getInt(2);
-            } else {
                 String surfaceType = detail.getString(2);
                 value = getSurfaceValue(surfaceType);
+            } else {
+                value = detail.getInt(2);
             }
             // add the given value to the values array using their respective start/end indices
             for (int j = startIndex; j < endIndex; j++) {
-                // exit loop when end of the values array is reached
+                // exit loop when we reach the end of the values array
                 if (j == details.length())
                     break;
                 values[j] = value;
