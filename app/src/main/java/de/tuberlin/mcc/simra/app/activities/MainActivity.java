@@ -58,7 +58,9 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
+import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
@@ -80,12 +82,15 @@ import de.tuberlin.mcc.simra.app.databinding.ActivityMainBinding;
 import de.tuberlin.mcc.simra.app.entities.IncidentLogEntry;
 import de.tuberlin.mcc.simra.app.entities.MetaData;
 import de.tuberlin.mcc.simra.app.entities.Profile;
+import de.tuberlin.mcc.simra.app.entities.ScoreColorList;
+import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 import de.tuberlin.mcc.simra.app.services.OBSService;
 import de.tuberlin.mcc.simra.app.services.RecorderService;
 import de.tuberlin.mcc.simra.app.util.BaseActivity;
 import de.tuberlin.mcc.simra.app.util.IOUtils;
 import de.tuberlin.mcc.simra.app.util.IncidentBroadcaster;
 import de.tuberlin.mcc.simra.app.util.PermissionHelper;
+import de.tuberlin.mcc.simra.app.util.RoadUtil;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
 
 public class MainActivity extends BaseActivity
@@ -93,6 +98,7 @@ public class MainActivity extends BaseActivity
 
     private static final String TAG = "MainActivity_LOG";
     private final static int REQUEST_ENABLE_BT = 1;
+    private final static int REQUEST_NAV = 2;
 
     public static ExecutorService myEx;
     ActivityMainBinding binding;
@@ -120,6 +126,10 @@ public class MainActivity extends BaseActivity
     private MyLocationNewOverlay mLocationOverlay;
     private LocationManager locationManager;
     private Boolean recording = false;
+
+    // map route drawing
+    Polyline roadOverlay;
+    FolderOverlay roadNodeMarkers;
 
     private void showOBSNotConnectedWarning() {
         android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(this);
@@ -158,6 +168,13 @@ public class MainActivity extends BaseActivity
             } else if (resultCode == RESULT_CANCELED) {
                 // Bluetooth was not enabled
                 deactivateOBS();
+            }
+        } else if (requestCode == REQUEST_NAV) {
+            if (resultCode == RESULT_OK) {
+                SimraRoad road = data.getParcelableExtra("roads");
+                Log.d(TAG, "Starting navigation with: " + road.getLengthDurationText(this, 0));
+                RoadUtil roadUtil = new RoadUtil(mMapView, road, roadOverlay, roadNodeMarkers, this);
+                roadOverlay = roadUtil.drawRoute(ScoreColorList.ScoreType.NONE);
             }
         }
     }
@@ -248,6 +265,11 @@ public class MainActivity extends BaseActivity
         mMapView.getOverlays().add(new MapEventsOverlay(mReceive));
         // mMapView.getOverlays().add(this.mRotationGestureOverlay);
 
+        // add road markers folder to map view
+        roadNodeMarkers = new FolderOverlay();
+        roadNodeMarkers.setName("Route Steps");
+        mMapView.getOverlays().add(roadNodeMarkers);
+
         mLocationOverlay.setOptionsMenuEnabled(true);
         mCompassOverlay.enableCompass();
 
@@ -284,7 +306,9 @@ public class MainActivity extends BaseActivity
             startRecording();
         });
 
-        binding.appBarMain.buttonNavigate.setOnClickListener(v -> startActivity(new Intent(this, NavigationActivity.class)));
+        binding.appBarMain.buttonNavigate.setOnClickListener(v ->
+                startActivityForResult(new Intent(this, NavigationActivity.class), REQUEST_NAV)
+        );
 
         Consumer<Integer> recordIncident = (incidentType) -> {
             Toast t = Toast.makeText(MainActivity.this, R.string.recorded_incident, Toast.LENGTH_SHORT);
@@ -830,14 +854,14 @@ public class MainActivity extends BaseActivity
                 i.putExtra("lat", p.getLatitude());
                 i.putExtra("lon", p.getLongitude());
                 i.putExtra("isStart", false);
-                startActivity(i);
+                startActivityForResult(i, REQUEST_NAV);
             });
             alert.setPositiveButton(R.string.navigate_from, (dialog, whichButton) -> {
                 Intent i = new Intent(MainActivity.this, NavigationActivity.class);
                 i.putExtra("lat", p.getLatitude());
                 i.putExtra("lon", p.getLongitude());
                 i.putExtra("isStart", true);
-                startActivity(i);
+                startActivityForResult(i, REQUEST_NAV);
             });
             alert.show();
             return false;

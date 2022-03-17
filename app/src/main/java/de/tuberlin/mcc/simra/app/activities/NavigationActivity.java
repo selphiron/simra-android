@@ -1,13 +1,12 @@
 package de.tuberlin.mcc.simra.app.activities;
 
 import static de.tuberlin.mcc.simra.app.util.Constants.ZOOM_LEVEL;
+import static de.tuberlin.mcc.simra.app.util.RoadUtil.setMarkerIcon;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -23,13 +22,8 @@ import android.widget.AutoCompleteTextView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
-import androidx.core.content.res.ResourcesCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
-
 import org.osmdroid.bonuspack.location.GeocoderNominatim;
 import org.osmdroid.bonuspack.routing.Road;
-import org.osmdroid.bonuspack.routing.RoadManager;
-import org.osmdroid.bonuspack.routing.RoadNode;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
@@ -38,11 +32,7 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.PaintList;
 import org.osmdroid.views.overlay.Polyline;
-import org.osmdroid.views.overlay.advancedpolyline.PolychromaticPaintList;
-import org.osmdroid.views.overlay.infowindow.BasicInfoWindow;
-import org.osmdroid.views.overlay.infowindow.MarkerInfoWindow;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,6 +49,7 @@ import de.tuberlin.mcc.simra.app.entities.ScoreColorList;
 import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 import de.tuberlin.mcc.simra.app.services.SimraNavService;
 import de.tuberlin.mcc.simra.app.util.BaseActivity;
+import de.tuberlin.mcc.simra.app.util.RoadUtil;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
 import de.tuberlin.mcc.simra.app.util.Utils;
 
@@ -166,19 +157,20 @@ public class NavigationActivity extends BaseActivity {
         binding.routeVisualizerSelector.setOnClickListener(v -> {
             PopupMenu popup = new PopupMenu(this, v);
             popup.setOnMenuItemClickListener(item -> {
+                RoadUtil roadUtil = new RoadUtil(mapView, mRoads[0], mRoadOverlays[0], mRoadNodeMarkers, this);
                 int itemId = item.getItemId();
                 if (itemId == R.id.option_none) {
-                    selectRoad(ScoreColorList.ScoreType.NONE);
+                    roadUtil.paintRoad(ScoreColorList.ScoreType.NONE);
                     return true;
                 } else if (itemId == R.id.option_safety_score) {
-                    selectRoad(ScoreColorList.ScoreType.SAFETY);
+                    roadUtil.paintRoad(ScoreColorList.ScoreType.SAFETY);
                     return true;
                 } else if (itemId == R.id.option_surface_quality) {
                     boolean simraEnabled = SharedPref.Settings.Navigation.getSimraSurfaceQualityEnabled(this);
                     ScoreColorList.ScoreType surfaceType = ScoreColorList.ScoreType.SURFACE_OSM;
                     if (simraEnabled)
                         surfaceType = ScoreColorList.ScoreType.SURFACE_SIMRA;
-                    selectRoad(surfaceType);
+                    roadUtil.paintRoad(surfaceType);
                     return true;
                 } else return false;
             });
@@ -191,7 +183,8 @@ public class NavigationActivity extends BaseActivity {
 
         // listener for starting navigation
         binding.startNavigationBtn.setOnClickListener(v -> {
-            // TODO(dk): implement navigation
+            setResult(Activity.RESULT_OK, new Intent().putExtra("roads", mRoads[0]));
+            finish();
         });
 
         // handlers for delayed geocoder fetching
@@ -290,7 +283,7 @@ public class NavigationActivity extends BaseActivity {
             default:
                 color = R.color.viaYellow;
         }
-        setMarkerIcon(marker, R.drawable.ic_marker, color);
+        setMarkerIcon(marker, R.drawable.ic_marker, color, this);
         mapView.getOverlays().add(marker);
     }
 
@@ -382,95 +375,19 @@ public class NavigationActivity extends BaseActivity {
 
         @Override
         protected void onPostExecute(SimraRoad[] roads) {
-            mRoads = roads;
-            updateUIWithRoads(roads);
-        }
-
-    }
-
-    private void updateUIWithRoads(Road[] roads) {
-        // exit prematurely if error occurs
-        if (roads[0].mStatus >= Road.STATUS_TECHNICAL_ISSUE || roads[0].mStatus == Road.STATUS_INVALID) {
-            Toast.makeText(mapView.getContext(), getString(R.string.route_error), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        toggleButtons(true);
-        Log.d(TAG, "road count: " + roads.length);
-        mRoadNodeMarkers.getItems().clear();
-        List<Overlay> mapOverlays = mapView.getOverlays();
-        if (mRoadOverlays != null) {
-            for (Polyline mRoadOverlay : mRoadOverlays) mapOverlays.remove(mRoadOverlay);
-            mRoadOverlays = null;
-        }
-        mRoadOverlays = new Polyline[roads.length];
-        for (int i = 0; i < roads.length; i++) {
-            Polyline roadPolyline = RoadManager.buildRoadOverlay(roads[i]);
-            mRoadOverlays[i] = roadPolyline;
-            roadPolyline.getOutlinePaint().setStrokeWidth(20);
-            String routeDesc = roads[i].getLengthDurationText(this, -1);
-            binding.durationText.setText(routeDesc);
-            roadPolyline.setTitle(getString(R.string.route) + " - " + routeDesc);
-            roadPolyline.setInfoWindow(new BasicInfoWindow(org.osmdroid.bonuspack.R.layout.bonuspack_bubble, mapView));
-            roadPolyline.setRelatedObject(i);
-            mapOverlays.add(0, roadPolyline);
-        }
-        selectRoad(ScoreColorList.ScoreType.NONE);
-    }
-
-    void selectRoad(ScoreColorList.ScoreType scoreType) {
-        mRoadOverlays[0].getOutlinePaintLists().clear();
-        mSelectedRoad = 0;
-        putRoadNodes(mRoads[0]);
-        for (int i = 0; i < mRoadOverlays.length; i++) {
-            Paint p = mRoadOverlays[i].getOutlinePaint();
-            PaintList pList = new PolychromaticPaintList(
-                    p,
-                    new ScoreColorList(mRoads[0], scoreType, this),
-                    false
-            );
-            if (i == 0)
-                mRoadOverlays[0].getOutlinePaintLists().add(pList);
-            else
-                p.setColor(Color.GRAY);
-        }
-        mapView.invalidate();
-    }
-
-    private void setMarkerIcon(Marker marker, int iconResource, int color) {
-        Drawable icon = ResourcesCompat.getDrawable(getResources(), iconResource, null);
-        // set icon tint
-        assert icon != null;
-        icon = DrawableCompat.wrap(icon);
-        DrawableCompat.setTint(icon, getColor(color));
-        marker.setIcon(icon);
-    }
-
-    private void putRoadNodes(Road road) {
-        mRoadNodeMarkers.getItems().clear();
-        int n = road.mNodes.size();
-        MarkerInfoWindow infoWindow = new MarkerInfoWindow(org.osmdroid.bonuspack.R.layout.bonuspack_bubble, mapView);
-        TypedArray iconIds = getResources().obtainTypedArray(R.array.direction_icons);
-        for (int i = 0; i < n; i++) {
-            RoadNode node = road.mNodes.get(i);
-            String instructions = (node.mInstructions == null ? "" : node.mInstructions);
-            Marker nodeMarker = new Marker(mapView);
-            nodeMarker.setTitle(getString(R.string.step) + " " + (i + 1));
-            nodeMarker.setSnippet(instructions);
-            nodeMarker.setSubDescription(Road.getLengthDurationText(this, node.mLength, node.mDuration));
-            nodeMarker.setPosition(node.mLocation);
-            setMarkerIcon(nodeMarker, R.drawable.ic_circle, R.color.colorPrimaryDark);
-            nodeMarker.setInfoWindow(infoWindow); //use a shared info window.
-            int iconId = iconIds.getResourceId(node.mManeuverType, R.drawable.ic_empty);
-            if (iconId != R.drawable.ic_empty) {
-                Drawable image = ResourcesCompat.getDrawable(getResources(), iconId, null);
-                nodeMarker.setImage(image);
+            // exit prematurely if error occurs
+            if (roads[0].mStatus >= Road.STATUS_TECHNICAL_ISSUE || roads[0].mStatus == Road.STATUS_INVALID) {
+                Toast.makeText(mapView.getContext(), getString(R.string.route_error), Toast.LENGTH_SHORT).show();
+            } else {
+                toggleButtons(true);
+                mRoads = roads;
+                RoadUtil roadUtil = new RoadUtil(mapView, roads[0], null, mRoadNodeMarkers, NavigationActivity.this);
+                Polyline roadOverlay = roadUtil.drawRoute(ScoreColorList.ScoreType.NONE);
+                mRoadOverlays = new Polyline[roads.length];
+                mRoadOverlays[0] = roadOverlay;
             }
-            nodeMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
-            mRoadNodeMarkers.add(nodeMarker);
-            //add road markers below waypoints, above road polyline
-            mapView.getOverlays().add(1, mRoadNodeMarkers);
         }
-        iconIds.recycle();
+
     }
 
     private void toggleButtons(boolean routeFetched) {
