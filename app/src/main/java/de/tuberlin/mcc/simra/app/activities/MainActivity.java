@@ -47,6 +47,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Consumer;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -78,6 +80,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
+import de.tuberlin.mcc.simra.app.adapter.NavigationItemAdapter;
 import de.tuberlin.mcc.simra.app.databinding.ActivityMainBinding;
 import de.tuberlin.mcc.simra.app.entities.IncidentLogEntry;
 import de.tuberlin.mcc.simra.app.entities.MetaData;
@@ -127,7 +130,8 @@ public class MainActivity extends BaseActivity
     private LocationManager locationManager;
     private Boolean recording = false;
 
-    // map route drawing
+    // map routing
+    SimraRoad navRoad;
     Polyline roadOverlay;
     FolderOverlay roadNodeMarkers;
 
@@ -171,12 +175,34 @@ public class MainActivity extends BaseActivity
             }
         } else if (requestCode == REQUEST_NAV) {
             if (resultCode == RESULT_OK) {
-                SimraRoad road = data.getParcelableExtra("roads");
-                Log.d(TAG, "Starting navigation with: " + road.getLengthDurationText(this, 0));
-                RoadUtil roadUtil = new RoadUtil(mMapView, road, roadOverlay, roadNodeMarkers, this);
+                navRoad = data.getParcelableExtra("roads");
+                Log.d(TAG, "Starting navigation with: " + navRoad.getLengthDurationText(this, 0));
+                RoadUtil roadUtil = new RoadUtil(mMapView, navRoad, roadOverlay, roadNodeMarkers, this);
                 roadOverlay = roadUtil.drawRoute(ScoreColorList.ScoreType.NONE);
+                startNavigation();
             }
         }
+    }
+
+    private void startNavigation() {
+        // set nav button to cancel mode
+        binding.appBarMain.buttonNavigate.setImageResource(R.drawable.ic_cancel);
+        binding.appBarMain.showNavInstructionsBtn.setVisibility(View.VISIBLE);
+        RecyclerView navStepList = binding.appBarMain.routeInstructionsWindow.navigationStepsList;
+        navStepList.setAdapter(new NavigationItemAdapter(navRoad.mNodes, this));
+        navStepList.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void cancelNavigation() {
+        binding.appBarMain.routeInstructionsWindow.getRoot().setVisibility(View.GONE);
+        binding.appBarMain.showNavInstructionsBtn.setVisibility(View.GONE);
+        binding.appBarMain.buttonNavigate.setImageResource(R.drawable.ic_nav);
+        // clear view and reset vars
+        mLocationOverlay = null;
+        roadNodeMarkers.getItems().clear();
+        mMapView.getOverlays().remove(roadOverlay);
+        roadOverlay = null;
+        navRoad = null;
     }
 
     @SuppressLint("MissingPermission")
@@ -288,7 +314,7 @@ public class MainActivity extends BaseActivity
         // CenterMap
         ImageButton centerMap = findViewById(R.id.center_button);
         centerMap.setOnClickListener(v -> {
-            mLocationOverlay.enableFollowLocation();
+            mLocationOverlay.enableFollowLocation(); // TODO(dk): mLocationOverlay is null after clearing nav
             mMapController.setZoom(ZOOM_LEVEL);
         });
 
@@ -306,8 +332,20 @@ public class MainActivity extends BaseActivity
             startRecording();
         });
 
-        binding.appBarMain.buttonNavigate.setOnClickListener(v ->
-                startActivityForResult(new Intent(this, NavigationActivity.class), REQUEST_NAV)
+        binding.appBarMain.buttonNavigate.setOnClickListener(v -> {
+            if (navRoad == null) {
+                startActivityForResult(new Intent(this, NavigationActivity.class), REQUEST_NAV);
+            } else {
+                cancelNavigation();
+            }
+        });
+
+        binding.appBarMain.showNavInstructionsBtn.setOnClickListener(v ->
+                binding.appBarMain.routeInstructionsWindow.getRoot().setVisibility(View.VISIBLE)
+        );
+
+        binding.appBarMain.routeInstructionsWindow.cancelButton.setOnClickListener(v ->
+                binding.appBarMain.routeInstructionsWindow.getRoot().setVisibility(View.GONE)
         );
 
         Consumer<Integer> recordIncident = (incidentType) -> {

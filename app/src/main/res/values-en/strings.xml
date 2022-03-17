@@ -396,6 +396,7 @@
     <string name="enable_simra_surface_hint">Use SimRa data for surface quality weighting</string>
     <string name="start">Start</string>
     <string name="route">Route</string>
+    <string name="navigation_steps">Navigation Steps</string>
     <!-- menu options for visualization-->
     <string name="option_none">None</string>
     <string name="option_simra_safety_score">SimRa safety score</string>
