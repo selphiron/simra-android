@@ -80,6 +80,7 @@ import de.tuberlin.mcc.simra.app.databinding.ActivityMainBinding;
 import de.tuberlin.mcc.simra.app.entities.IncidentLogEntry;
 import de.tuberlin.mcc.simra.app.entities.MetaData;
 import de.tuberlin.mcc.simra.app.entities.Profile;
+import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 import de.tuberlin.mcc.simra.app.services.OBSService;
 import de.tuberlin.mcc.simra.app.services.RecorderService;
 import de.tuberlin.mcc.simra.app.util.BaseActivity;
@@ -93,6 +94,7 @@ public class MainActivity extends BaseActivity
 
     private static final String TAG = "MainActivity_LOG";
     private final static int REQUEST_ENABLE_BT = 1;
+    private final static int REQUEST_NAV = 2;
 
     public static ExecutorService myEx;
     ActivityMainBinding binding;
@@ -158,6 +160,11 @@ public class MainActivity extends BaseActivity
             } else if (resultCode == RESULT_CANCELED) {
                 // Bluetooth was not enabled
                 deactivateOBS();
+            }
+        } else if (requestCode == REQUEST_NAV) {
+            if (resultCode == RESULT_OK) {
+                SimraRoad[] roads = (SimraRoad[]) data.getParcelableArrayExtra("roads");
+                Log.d(TAG, "Starting navigation with: " + roads[0]);
             }
         }
     }
@@ -284,7 +291,9 @@ public class MainActivity extends BaseActivity
             startRecording();
         });
 
-        binding.appBarMain.buttonNavigate.setOnClickListener(v -> startActivity(new Intent(this, NavigationActivity.class)));
+        binding.appBarMain.buttonNavigate.setOnClickListener(v ->
+                startActivityForResult(new Intent(this, NavigationActivity.class), REQUEST_NAV)
+        );
 
         Consumer<Integer> recordIncident = (incidentType) -> {
             Toast t = Toast.makeText(MainActivity.this, R.string.recorded_incident, Toast.LENGTH_SHORT);
