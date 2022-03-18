@@ -146,8 +146,15 @@ public class RoadUtil {
         for (int i = 0; i < road.mNodes.size(); i++) {
             RoadNode node = road.mNodes.get(i);
             double distance = currentLocation.distanceToAsDouble(node.mLocation);
-            // this node is the closest and close enough to be considered as "passed" (10 m)
-            if (currentLocation.distanceToAsDouble(node.mLocation) < distanceShortest && distance < 10) {
+            // assign new distance only if:
+            // the node is the shortest distance
+            // the next node in order
+            // 20 m or less from the user
+            if (
+                    currentLocation.distanceToAsDouble(node.mLocation) < distanceShortest
+                            && (i - 1 == lastVisitedNodeIndex)
+                            && (distance <= 20)
+            ) {
                 distanceShortest = distance;
                 closestIndex = i;
             }
@@ -157,12 +164,8 @@ public class RoadUtil {
         if (finalIndex == (road.mNodes.size() - 1)) {
             // the closest node ist the last one, indicates that no further instructions needed
             return -1;
-        } else if (finalIndex == lastVisitedNodeIndex)
-            // the new index is not close enough/closer than the last visited node, do not skip to the next
+        } else {
             return finalIndex;
-        {
-            // skip to the next node
-            return finalIndex + 1;
         }
     }
 }

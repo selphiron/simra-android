@@ -917,23 +917,26 @@ public class MainActivity extends BaseActivity
 
         @Override
         public boolean longPressHelper(GeoPoint p) {
-            final AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
-            alert.setTitle(R.string.location_selected);
-            alert.setNegativeButton(R.string.navigate_to, (dialog, whichButton) -> {
-                Intent i = new Intent(MainActivity.this, NavigationActivity.class);
-                i.putExtra("lat", p.getLatitude());
-                i.putExtra("lon", p.getLongitude());
-                i.putExtra("isStart", false);
-                startActivityForResult(i, REQUEST_NAV);
-            });
-            alert.setPositiveButton(R.string.navigate_from, (dialog, whichButton) -> {
-                Intent i = new Intent(MainActivity.this, NavigationActivity.class);
-                i.putExtra("lat", p.getLatitude());
-                i.putExtra("lon", p.getLongitude());
-                i.putExtra("isStart", true);
-                startActivityForResult(i, REQUEST_NAV);
-            });
-            alert.show();
+            // only show menu if navigation not running
+            if (navRoad == null) {
+                final AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+                alert.setTitle(R.string.location_selected);
+                alert.setNegativeButton(R.string.navigate_to, (dialog, whichButton) -> {
+                    Intent i = new Intent(MainActivity.this, NavigationActivity.class);
+                    i.putExtra("lat", p.getLatitude());
+                    i.putExtra("lon", p.getLongitude());
+                    i.putExtra("isStart", false);
+                    startActivityForResult(i, REQUEST_NAV);
+                });
+                alert.setPositiveButton(R.string.navigate_from, (dialog, whichButton) -> {
+                    Intent i = new Intent(MainActivity.this, NavigationActivity.class);
+                    i.putExtra("lat", p.getLatitude());
+                    i.putExtra("lon", p.getLongitude());
+                    i.putExtra("isStart", true);
+                    startActivityForResult(i, REQUEST_NAV);
+                });
+                alert.show();
+            }
             return false;
         }
     };

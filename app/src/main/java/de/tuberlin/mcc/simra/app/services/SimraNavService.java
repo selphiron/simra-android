@@ -164,12 +164,23 @@ public class SimraNavService extends GraphHopperRoadManager {
         return values;
     }
 
-    private int getSurfaceValue(String surfaceType) { //TODO(dk): proper cases and ratings
+    private int getSurfaceValue(String surfaceType) {
         switch (surfaceType) {
-            case "gravel":
-                return 3;
-            case "unpaved":
+            case "paving_stones":
                 return 2;
+            case "fine_gravel":
+            case "unpaved":
+            case "compacted":
+                return 3;
+            case "cobblestone":
+            case "gravel":
+            case "ground":
+                return 4;
+            case "dirt":
+            case "grass":
+            case "sand":
+            case "other":
+                return 5;
             default:
                 return 1;
         }
