@@ -1,8 +1,10 @@
 package de.tuberlin.mcc.simra.app.adapter;
 
+import static de.tuberlin.mcc.simra.app.util.RoadUtil.getInstructionContent;
+
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,10 +12,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadNode;
 
 import java.util.List;
@@ -47,18 +47,10 @@ public class NavigationItemAdapter extends RecyclerView.Adapter<NavigationItemAd
         TextView title = holder.navItemTitle;
         TextView duration = holder.navItemDuration;
         RoadNode item = navInstructions.get(position);
-        String positionStep = (position + 1) + ". ";
-        String instruction = item.mInstructions == null ? "" : item.mInstructions;
-        title.setText(String.format("%s%s", positionStep, instruction));
-        duration.setText(Road.getLengthDurationText(context, item.mLength, item.mDuration));
-        // set icon
-        TypedArray iconIds = context.getResources().obtainTypedArray(R.array.direction_icons);
-        int iconId = iconIds.getResourceId(item.mManeuverType, R.drawable.ic_empty);
-        if (iconId != R.drawable.ic_empty) {
-            Drawable image = ResourcesCompat.getDrawable(context.getResources(), iconId, null);
-            navIcon.setImageDrawable(image);
-        }
-        iconIds.recycle();
+        Pair<Pair<String, String>, Drawable> content = getInstructionContent(item, position, context);
+        title.setText(content.first.first);
+        duration.setText(content.first.second);
+        navIcon.setImageDrawable(content.second);
     }
 
     @Override

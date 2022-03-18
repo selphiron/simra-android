@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
@@ -12,6 +13,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.bonuspack.routing.RoadNode;
+import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.Marker;
@@ -118,5 +120,49 @@ public class RoadUtil {
         icon = DrawableCompat.wrap(icon);
         DrawableCompat.setTint(icon, ctx.getColor(color));
         marker.setIcon(icon);
+    }
+
+    public static Pair<Pair<String, String>, Drawable> getInstructionContent(RoadNode node, int index, Context context) {
+        String step = context.getString(R.string.step) + " " + (index + 1);
+        String instruction = node.mInstructions == null ? "" : node.mInstructions;
+        String headerText = String.format("%s: %s", step, instruction);
+        String durationText = Road.getLengthDurationText(context, node.mLength, node.mDuration);
+        // icon
+        TypedArray iconIds = context.getResources().obtainTypedArray(R.array.direction_icons);
+        int iconId = iconIds.getResourceId(node.mManeuverType, R.drawable.ic_empty);
+        Drawable image = null;
+        if (iconId != R.drawable.ic_empty) {
+            image = ResourcesCompat.getDrawable(context.getResources(), iconId, null);
+        }
+        iconIds.recycle();
+        return new Pair<>(new Pair<>(headerText, durationText), image);
+    }
+
+    public static int getNextNodeIndex(int lastVisitedNodeIndex, SimraRoad road, GeoPoint currentLocation) {
+        // init vars
+        double distanceShortest = currentLocation.distanceToAsDouble(road.mNodes.get(0).mLocation);
+        int closestIndex = 0;
+        // find the node the user is currently the closest to
+        for (int i = 0; i < road.mNodes.size(); i++) {
+            RoadNode node = road.mNodes.get(i);
+            double distance = currentLocation.distanceToAsDouble(node.mLocation);
+            // this node is the closest and close enough to be considered as "passed" (10 m)
+            if (currentLocation.distanceToAsDouble(node.mLocation) < distanceShortest && distance < 10) {
+                distanceShortest = distance;
+                closestIndex = i;
+            }
+        }
+        // find node after closest and visited (this is the instruction that needs to be shown)
+        int finalIndex = Math.max(closestIndex, lastVisitedNodeIndex);
+        if (finalIndex == (road.mNodes.size() - 1)) {
+            // the closest node ist the last one, indicates that no further instructions needed
+            return -1;
+        } else if (finalIndex == lastVisitedNodeIndex)
+            // the new index is not close enough/closer than the last visited node, do not skip to the next
+            return finalIndex;
+        {
+            // skip to the next node
+            return finalIndex + 1;
+        }
     }
 }

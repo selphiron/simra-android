@@ -3,6 +3,8 @@ package de.tuberlin.mcc.simra.app.activities;
 import static de.tuberlin.mcc.simra.app.entities.Profile.profileIsInUnknownRegion;
 import static de.tuberlin.mcc.simra.app.update.VersionUpdater.Legacy.Utils.getAppVersionNumber;
 import static de.tuberlin.mcc.simra.app.util.Constants.ZOOM_LEVEL;
+import static de.tuberlin.mcc.simra.app.util.RoadUtil.getInstructionContent;
+import static de.tuberlin.mcc.simra.app.util.RoadUtil.getNextNodeIndex;
 import static de.tuberlin.mcc.simra.app.util.SimRAuthenticator.getClientHash;
 import static de.tuberlin.mcc.simra.app.util.Utils.fireProfileRegionPrompt;
 import static de.tuberlin.mcc.simra.app.util.Utils.getNews;
@@ -19,6 +21,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -30,6 +33,7 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -82,6 +86,7 @@ import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
 import de.tuberlin.mcc.simra.app.adapter.NavigationItemAdapter;
 import de.tuberlin.mcc.simra.app.databinding.ActivityMainBinding;
+import de.tuberlin.mcc.simra.app.databinding.RowNavigationBinding;
 import de.tuberlin.mcc.simra.app.entities.IncidentLogEntry;
 import de.tuberlin.mcc.simra.app.entities.MetaData;
 import de.tuberlin.mcc.simra.app.entities.Profile;
@@ -134,6 +139,8 @@ public class MainActivity extends BaseActivity
     SimraRoad navRoad;
     Polyline roadOverlay;
     FolderOverlay roadNodeMarkers;
+    // visited nodes index counter
+    int latestNodeIndex = 0;
 
     private void showOBSNotConnectedWarning() {
         android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(this);
@@ -187,18 +194,27 @@ public class MainActivity extends BaseActivity
     private void startNavigation() {
         // set nav button to cancel mode
         binding.appBarMain.buttonNavigate.setImageResource(R.drawable.ic_cancel);
-        binding.appBarMain.showNavInstructionsBtn.setVisibility(View.VISIBLE);
         RecyclerView navStepList = binding.appBarMain.routeInstructionsWindow.navigationStepsList;
         navStepList.setAdapter(new NavigationItemAdapter(navRoad.mNodes, this));
         navStepList.setLayoutManager(new LinearLayoutManager(this));
+        // populate current nav instruction with first step
+        binding.appBarMain.currentInstructionCard.setVisibility(View.VISIBLE);
+        setNavigationText(0);
+    }
+
+    private void setNavigationText(int index) {
+        Pair<Pair<String, String>, Drawable> content = getInstructionContent(navRoad.mNodes.get(index), index, this);
+        RowNavigationBinding currentStep = binding.appBarMain.currentInstructionContainer;
+        currentStep.navigationStepTitle.setText(content.first.first);
+        currentStep.navigationStepDuration.setText(content.first.second);
+        currentStep.navigationStepImage.setImageDrawable(content.second);
     }
 
     private void cancelNavigation() {
+        binding.appBarMain.currentInstructionCard.setVisibility(View.GONE);
         binding.appBarMain.routeInstructionsWindow.getRoot().setVisibility(View.GONE);
-        binding.appBarMain.showNavInstructionsBtn.setVisibility(View.GONE);
         binding.appBarMain.buttonNavigate.setImageResource(R.drawable.ic_nav);
         // clear view and reset vars
-        mLocationOverlay = null;
         roadNodeMarkers.getItems().clear();
         mMapView.getOverlays().remove(roadOverlay);
         roadOverlay = null;
@@ -314,7 +330,7 @@ public class MainActivity extends BaseActivity
         // CenterMap
         ImageButton centerMap = findViewById(R.id.center_button);
         centerMap.setOnClickListener(v -> {
-            mLocationOverlay.enableFollowLocation(); // TODO(dk): mLocationOverlay is null after clearing nav
+            mLocationOverlay.enableFollowLocation();
             mMapController.setZoom(ZOOM_LEVEL);
         });
 
@@ -340,7 +356,7 @@ public class MainActivity extends BaseActivity
             }
         });
 
-        binding.appBarMain.showNavInstructionsBtn.setOnClickListener(v ->
+        binding.appBarMain.currentInstructionCard.setOnClickListener(v ->
                 binding.appBarMain.routeInstructionsWindow.getRoot().setVisibility(View.VISIBLE)
         );
 
@@ -713,6 +729,22 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onLocationChanged(Location location) {
+        // update navigation instructions throughout location changes
+        if (navRoad != null && location != null) {
+            GeoPoint point = new GeoPoint(location.getLatitude(), location.getLongitude());
+            // closer than 10 m to last instruction, navigation finished
+            if (point.distanceToAsDouble(navRoad.mNodes.get(navRoad.mNodes.size() - 1).mLocation) < 10) {
+                cancelNavigation();
+                latestNodeIndex = 0;
+                return;
+            }
+            int nextNodeIndex = getNextNodeIndex(latestNodeIndex, navRoad, point);
+            // navigation not finished, set text for next node
+            if (nextNodeIndex >= 0) {
+                latestNodeIndex = nextNodeIndex;
+                setNavigationText(nextNodeIndex);
+            }
+        }
     }
 
     @Override
