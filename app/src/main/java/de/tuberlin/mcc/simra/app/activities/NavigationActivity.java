@@ -22,6 +22,8 @@ import android.widget.AutoCompleteTextView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+
 import org.osmdroid.bonuspack.location.GeocoderNominatim;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.util.BoundingBox;
@@ -73,7 +75,6 @@ public class NavigationActivity extends BaseActivity {
     private final int GEO_SEARCH = 10;
 
     public static SimraRoad[] mRoads;  //made static to pass between activities
-    protected int mSelectedRoad;
     protected Polyline[] mRoadOverlays;
     protected FolderOverlay mRoadNodeMarkers;
 
@@ -213,6 +214,19 @@ public class NavigationActivity extends BaseActivity {
         mRoadNodeMarkers = new FolderOverlay();
         mRoadNodeMarkers.setName("Route Steps");
         mapView.getOverlays().add(mRoadNodeMarkers);
+
+        // show a dialog on first use
+        if (SharedPref.Settings.Navigation.getFirstTime(this)) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.nav_intro_title)
+                    .setMessage(R.string.nav_intro_message)
+                    .setCancelable(true)
+                    .setPositiveButton(getString(R.string.ok), (dialog, which) ->
+                            SharedPref.Settings.Navigation.setFirstTime(false, this)
+                    )
+                    .create()
+                    .show();
+        }
     }
 
     private void handleSuggestionClick(AdapterView<?> parent, int position, PointType pointType) {
