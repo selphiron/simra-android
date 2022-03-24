@@ -107,6 +107,11 @@ public class SettingsActivity extends BaseActivity {
         binding.simraSurfaceEnabledCheckbox.setOnCheckedChangeListener((buttonView, isChecked) ->
                 SharedPref.Settings.Navigation.setSimraSurfaceQualityEnabled(isChecked, this)
         );
+        // Checkbox: Start and stop recording together with navigation
+        binding.recordWithNavCheckbox.setChecked(SharedPref.Settings.Navigation.getStartRecordingWithNavigation(this));
+        binding.recordWithNavCheckbox.setOnCheckedChangeListener((buttonView, isChecked) ->
+                SharedPref.Settings.Navigation.setStartRecordingWithNavigation(isChecked, this)
+        );
 
         // Select Menu: Bike Type
         Spinner bikeTypeSpinner = findViewById(R.id.bikeTypeSpinner);

@@ -415,6 +415,7 @@
     <string name="start">Start</string>
     <string name="route">Route</string>
     <string name="navigation_steps">Navigationsschritte</string>
+    <string name="record_with_nav">Fahrt zusammen mit Navigationsstart aufzeichnen</string>
     <!-- menu options for visualization-->
     <string name="option_none">None</string>
     <string name="option_simra_safety_score">SimRa Safety-Score</string>

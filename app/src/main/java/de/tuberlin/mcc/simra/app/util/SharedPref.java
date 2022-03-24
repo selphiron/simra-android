@@ -381,6 +381,7 @@ public class SharedPref {
             public static final String SAFETY_SCORE = NAVIGATION_SETTINGS + "Safety-Score";
             public static final String SURFACE_QUALITY = NAVIGATION_SETTINGS + "Surface-Quality";
             public static final String SIMRA_SURFACE_QUALITY_ENABLED = NAVIGATION_SETTINGS + "Surface-Quality-Enabled";
+            public static final String RECORD_WITH_NAVIGATION = NAVIGATION_SETTINGS + "Record-With-Navigation";
 
 
             public static void setSafetyScoreWeighting(int weighting, Context context) {
@@ -405,6 +406,14 @@ public class SharedPref {
 
             public static void setSimraSurfaceQualityEnabled(boolean enabled, Context context) {
                 writeBooleanToAppSharedPrefsAsync(SIMRA_SURFACE_QUALITY_ENABLED, enabled, context);
+            }
+
+            public static boolean getStartRecordingWithNavigation(Context context) {
+                return readBooleanFromAppSharedPrefs(RECORD_WITH_NAVIGATION, context);
+            }
+
+            public static void setStartRecordingWithNavigation(boolean enabled, Context context) {
+                writeBooleanToAppSharedPrefsAsync(RECORD_WITH_NAVIGATION, enabled, context);
             }
         }
 

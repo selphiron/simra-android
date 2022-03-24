@@ -192,6 +192,10 @@ public class MainActivity extends BaseActivity
     }
 
     private void startNavigation() {
+        // check if recording should be enabled with nav
+        if (SharedPref.Settings.Navigation.getStartRecordingWithNavigation(this)) {
+            binding.appBarMain.buttonStartRecording.performClick();
+        }
         // set nav button to cancel mode
         binding.appBarMain.buttonNavigate.setImageResource(R.drawable.ic_cancel);
         RecyclerView navStepList = binding.appBarMain.routeInstructionsWindow.navigationStepsList;
@@ -211,6 +215,10 @@ public class MainActivity extends BaseActivity
     }
 
     private void cancelNavigation() {
+        // cancel recording with navigation if enabled
+        if (SharedPref.Settings.Navigation.getStartRecordingWithNavigation(this)) {
+            binding.appBarMain.buttonStopRecording.performClick();
+        }
         binding.appBarMain.currentInstructionCard.setVisibility(View.GONE);
         binding.appBarMain.routeInstructionsWindow.getRoot().setVisibility(View.GONE);
         binding.appBarMain.buttonNavigate.setImageResource(R.drawable.ic_nav);

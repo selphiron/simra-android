@@ -397,6 +397,7 @@
     <string name="start">Start</string>
     <string name="route">Route</string>
     <string name="navigation_steps">Navigation Steps</string>
+    <string name="record_with_nav">Start recording with navigation</string>
     <!-- menu options for visualization-->
     <string name="option_none">None</string>
     <string name="option_simra_safety_score">SimRa safety score</string>
