@@ -21,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.entities.SimraRoad;
@@ -64,6 +65,7 @@ public class SimraNavService extends GraphHopperRoadManager {
         json.put("safety_weight", SharedPref.Settings.Navigation.getSafetyScoreWeighting(context));
         json.put("street_condition_weight", SharedPref.Settings.Navigation.getSurfaceQualityWeighting(context));
         json.put("use_simra_surface_quality", SharedPref.Settings.Navigation.getSimraSurfaceQualityEnabled(context));
+        json.put("language", Locale.getDefault().getLanguage());
         JSONArray points = new JSONArray();
         for (GeoPoint point : waypoints) {
             JSONObject waypoint = new JSONObject();
