@@ -319,7 +319,7 @@ public class IOUtils {
         JSONArray newSets = new JSONArray();
         for (Pair<String, GeoPoint> p : points) {
             JSONObject object = new JSONObject();
-            if (p == null) {
+            if (p.second == null) {
                 object.put("null", true);
             } else {
                 object.put("null", false);
@@ -361,7 +361,7 @@ public class IOUtils {
                     for (int j = 0; j < locationSet.length(); j++) {
                         JSONObject location = locationSet.getJSONObject(j);
                         if (location.getBoolean("null")) {
-                            locations.add(null);
+                            locations.add(new Pair<>("", null));
                         } else {
                             locations.add(
                                     new Pair<>(
