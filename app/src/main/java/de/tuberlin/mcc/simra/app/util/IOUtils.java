@@ -1,22 +1,21 @@
 package de.tuberlin.mcc.simra.app.util;
 
-import android.content.ContentResolver;
+import static de.tuberlin.mcc.simra.app.util.SharedPref.clearSharedPrefs;
+import static de.tuberlin.mcc.simra.app.util.SharedPref.createEntry;
+
 import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
-import android.provider.DocumentsContract;
 import android.util.Log;
-import android.util.Xml;
+import android.util.Pair;
 import android.widget.Toast;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-import org.xmlpull.v1.XmlPullParser;
+import androidx.documentfile.provider.DocumentFile;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.osmdroid.util.GeoPoint;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -27,25 +26,14 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import androidx.documentfile.provider.DocumentFile;
 import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
-import de.tuberlin.mcc.simra.app.activities.AboutActivity;
-import de.tuberlin.mcc.simra.app.activities.SettingsActivity;
-
-import static de.tuberlin.mcc.simra.app.util.SharedPref.clearSharedPrefs;
-import static de.tuberlin.mcc.simra.app.util.SharedPref.createEntry;
 
 public class IOUtils {
     private static final String TAG = "IOUtils_LOG";
@@ -110,7 +98,7 @@ public class IOUtils {
             ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
             if (sourceFile.isDirectory()) {
                 Log.d(TAG, "parent: " + sourceFile.getParent() + " length: " + sourceFile.getParent().length());
-                zipSubFolder(out, sourceFile, sourceFile.getParent().length(),ctx);
+                zipSubFolder(out, sourceFile, sourceFile.getParent().length(), ctx);
             } else {
                 byte[] data = new byte[BUFFER];
                 FileInputStream fi = new FileInputStream(sourcePath);
@@ -122,7 +110,8 @@ public class IOUtils {
                 int count;
                 while ((count = origin.read(data, 0, BUFFER)) != -1) {
                     out.write(data, 0, count);
-                }}
+                }
+            }
 
             out.close();
         } catch (Exception e) {
@@ -140,8 +129,8 @@ public class IOUtils {
      */
 
     private static void zipSubFolder(ZipOutputStream out, File folder,
-                              int basePathLength, Context ctx) throws IOException {
-        if(!(folder.getAbsolutePath().equals(ctx.getFilesDir().getParent()) || folder.getAbsolutePath().contains("files") || folder.getAbsolutePath().contains("shared_prefs"))) {
+                                     int basePathLength, Context ctx) throws IOException {
+        if (!(folder.getAbsolutePath().equals(ctx.getFilesDir().getParent()) || folder.getAbsolutePath().contains("files") || folder.getAbsolutePath().contains("shared_prefs"))) {
             return;
         }
         final int BUFFER = 2048;
@@ -158,7 +147,7 @@ public class IOUtils {
                 String unmodifiedFilePath = file.getPath();
                 String relativePath = unmodifiedFilePath
                         .substring(basePathLength);
-                if(!relativePath.contains(".zip")) {
+                if (!relativePath.contains(".zip")) {
                     FileInputStream fi = new FileInputStream(unmodifiedFilePath);
 
                     origin = new BufferedInputStream(fi, BUFFER);
@@ -190,7 +179,7 @@ public class IOUtils {
         return lastPathComponent;
     }
 
-    public static void zip(List<File> files, File zipFile ) throws IOException {
+    public static void zip(List<File> files, File zipFile) throws IOException {
         final int BUFFER_SIZE = 4096;
 
         BufferedInputStream origin;
@@ -228,7 +217,8 @@ public class IOUtils {
      * imports rides, settings and statistics from a previously via export created SimRa.zip file.
      * The settings and statistics (.xml files) are being parsed and written as shared preferences.
      * The rides, incidents, metaData and other files and folders are simply extracted as .csv files.
-     * @param zipUri The URI of SimRa.zip chosen by the file picker
+     *
+     * @param zipUri  The URI of SimRa.zip chosen by the file picker
      * @param context Activity context needed to write to shared preferences
      * @return false, if IOException is thrown, true otherwise.
      */
@@ -252,7 +242,7 @@ public class IOUtils {
                         if (!folder.exists()) {
                             folder.mkdir();
                         }
-                    // delete the file if it already exists. Otherwise, extract it or parse the xml.
+                        // delete the file if it already exists. Otherwise, extract it or parse the xml.
                     } else {
                         File file = new File(tempPath.toString());
                         if (file.exists()) {
@@ -269,8 +259,7 @@ public class IOUtils {
             }
 
             zis.close();
-        }
-        catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
@@ -281,15 +270,16 @@ public class IOUtils {
     /**
      * Parses a shared preferences file (.xml) and overwrites/creates new entries in the respective
      * shared preferences file.
+     *
      * @param file
      * @param zis
      * @param context
      * @throws IOException
      */
     private static void loadSharePrefs(File file, ZipInputStream zis, Context context) throws IOException {
-        File tempFile = new File(file.getAbsolutePath().replace(".xml","_temp.xml"));
+        File tempFile = new File(file.getAbsolutePath().replace(".xml", "_temp.xml"));
         unzipContent(tempFile, zis);
-        String sharedPrefName = file.getName().replace(".xml","");
+        String sharedPrefName = file.getName().replace(".xml", "");
         clearSharedPrefs(sharedPrefName, context);
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(tempFile))) {
             String line;
@@ -304,6 +294,7 @@ public class IOUtils {
 
     /**
      * Unzips the content in zis to file.
+     *
      * @param file
      * @param zis
      * @throws IOException
@@ -319,6 +310,73 @@ public class IOUtils {
             fOut.write(buffer, 0, count);
         }
         fOut.close();
+    }
+
+    public static void saveNavPoints(List<Pair<String, GeoPoint>> points, Context context) throws JSONException {
+        String locationsString = Utils.readContentFromFile("previous_nav_locations.json", context);
+        // create a location set from scratch
+        JSONArray pointsList = new JSONArray();
+        JSONArray newSets = new JSONArray();
+        for (Pair<String, GeoPoint> p : points) {
+            JSONObject object = new JSONObject();
+            if (p == null) {
+                object.put("null", true);
+            } else {
+                object.put("null", false);
+                object.put("address", p.first);
+                object.put("lat", p.second.getLatitude());
+                object.put("lon", p.second.getLongitude());
+            }
+            pointsList.put(object);
+        }
+        if (locationsString.isEmpty()) {
+            // if file doesn't exist, put this list directly into the superlist
+            newSets.put(pointsList);
+        } else {
+            // read existing superlist
+            JSONArray savedLocationSets = new JSONArray(locationsString);
+            // remove first entry to keep max index at 5
+            if (savedLocationSets.length() > 4) {
+                savedLocationSets.remove(0);
+            }
+            // put new location set into list, reassign variable
+            savedLocationSets.put(pointsList);
+            newSets = savedLocationSets;
+        }
+        // overwrite existing file with new content
+        Utils.overwriteFile(newSets.toString(), Files.getNavLocationsFile(context));
+    }
+
+    public static List<List<Pair<String, GeoPoint>>> getLastNavLocations(Context context) {
+        String locationsString = Utils.readContentFromFile("previous_nav_locations.json", context);
+        List<List<Pair<String, GeoPoint>>> points = new ArrayList<>();
+        if (locationsString.isEmpty()) {
+            return new ArrayList<>();
+        } else {
+            try {
+                JSONArray savedLocationSets = new JSONArray(locationsString);
+                for (int i = 0; i < savedLocationSets.length(); i++) {
+                    JSONArray locationSet = savedLocationSets.getJSONArray(i);
+                    List<Pair<String, GeoPoint>> locations = new ArrayList<>();
+                    for (int j = 0; j < locationSet.length(); j++) {
+                        JSONObject location = locationSet.getJSONObject(j);
+                        if (location.getBoolean("null")) {
+                            locations.add(null);
+                        } else {
+                            locations.add(
+                                    new Pair<>(
+                                            location.getString("address"),
+                                            new GeoPoint(location.getDouble("lat"), location.getDouble("lon")))
+                            );
+                        }
+                    }
+                    points.add(locations);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return points;
     }
 
     public static class Directories {
@@ -385,9 +443,11 @@ public class IOUtils {
         public static String getFileInfoLine() {
             return BuildConfig.VERSION_CODE + "#1" + System.lineSeparator();
         }
+
         public static String getFileInfoLine(int modelVersion) {
             return BuildConfig.VERSION_CODE + "#1#" + modelVersion + System.lineSeparator();
         }
+
         public static String getMetaDataFilePath(Context context) {
             return IOUtils.Directories.getBaseFolderPath(context) + "metaData.csv";
         }
@@ -412,9 +472,14 @@ public class IOUtils {
             return new File(IOUtils.Directories.getBaseFolderPath(context) + "simRa_regions.config");
         }
 
+        public static File getNavLocationsFile(Context context) {
+            return new File(IOUtils.Directories.getBaseFolderPath(context) + "previous_nav_locations.json");
+        }
+
         public static File getDENewsFile(Context context) {
             return new File(IOUtils.Directories.getBaseFolderPath(context) + "simRa_news_de.config");
         }
+
         public static File getENNewsFile(Context context) {
             return new File(IOUtils.Directories.getBaseFolderPath(context) + "simRa_news_en.config");
         }

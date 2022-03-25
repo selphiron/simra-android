@@ -15,6 +15,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -24,6 +25,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import org.json.JSONException;
 import org.osmdroid.bonuspack.location.GeocoderNominatim;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.util.BoundingBox;
@@ -38,6 +40,7 @@ import org.osmdroid.views.overlay.Polyline;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -45,12 +48,14 @@ import java.util.concurrent.ExecutionException;
 import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
 import de.tuberlin.mcc.simra.app.adapter.AutocompleteAdapter;
+import de.tuberlin.mcc.simra.app.annotation.MarkerFunct;
 import de.tuberlin.mcc.simra.app.databinding.ActivityNavigationBinding;
 import de.tuberlin.mcc.simra.app.entities.AddressPair;
 import de.tuberlin.mcc.simra.app.entities.ScoreColorList;
 import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 import de.tuberlin.mcc.simra.app.services.SimraNavService;
 import de.tuberlin.mcc.simra.app.util.BaseActivity;
+import de.tuberlin.mcc.simra.app.util.IOUtils;
 import de.tuberlin.mcc.simra.app.util.RoadUtil;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
 import de.tuberlin.mcc.simra.app.util.Utils;
@@ -184,8 +189,52 @@ public class NavigationActivity extends BaseActivity {
 
         // listener for starting navigation
         binding.startNavigationBtn.setOnClickListener(v -> {
+            // save locations to set for later use
+            try {
+                IOUtils.saveNavPoints(
+                        Arrays.asList(
+                                new Pair<>(binding.startLocation.getText().toString(), fromCoordinates),
+                                new Pair<>(binding.viaLocation.getText().toString(), viaCoordinates),
+                                new Pair<>(binding.destinationLocation.getText().toString(), toCoordinates)
+                        ), this);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            // return routing result
             setResult(Activity.RESULT_OK, new Intent().putExtra("roads", mRoads[0]));
             finish();
+        });
+
+        // listener for selecting previous navigation routes
+        binding.selectPreviousRoutesButton.setOnClickListener(v -> {
+            List<List<Pair<String, GeoPoint>>> pointsList = IOUtils.getLastNavLocations(this);
+            List<Pair<String, List<GeoPoint>>> routesList = new ArrayList<>();
+            for (List<Pair<String, GeoPoint>> points : pointsList) {
+                StringBuilder stringBuilder = new StringBuilder();
+                String prefix = "";
+                for (Pair<String, GeoPoint> point : points) {
+                    if (point.second == null) {
+                        continue;
+                    }
+                    stringBuilder.append(prefix);
+                    prefix = " - ";
+                    stringBuilder.append(point.first);
+                }
+                Pair<String, List<GeoPoint>> routePair = new Pair<>(stringBuilder.toString(), MarkerFunct.simpleMap(points, point -> point.second));
+                routesList.add(routePair);
+            }
+            // open menu for saved routes
+            if (routesList.isEmpty()) {
+                Toast.makeText(mapView.getContext(), getString(R.string.no_routes_available), Toast.LENGTH_SHORT).show();
+            } else {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Choose a saved route");
+                String[] addresses = MarkerFunct.simpleMap(routesList, pair -> pair.first).toArray(new String[0]);
+                ;
+                builder.setItems(addresses, (dialog, which) -> setRouteFields(routesList.get(which)));
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
         });
 
         // handlers for delayed geocoder fetching
@@ -227,6 +276,24 @@ public class NavigationActivity extends BaseActivity {
                     .create()
                     .show();
         }
+    }
+
+    private void setRouteFields(Pair<String, List<GeoPoint>> routePair) {
+        String[] addresses = routePair.first.split(" - ");
+        boolean withVia = addresses.length == 3;
+        int toIndex = addresses.length == 3 ? 2 : 1;
+        if (withVia) {
+            viaCoordinates = routePair.second.get(1);
+            binding.viaLocation.setText(addresses[1]);
+            updateSearchUiWithPoint(viaCoordinates, addresses[1]);
+        }
+        fromCoordinates = routePair.second.get(0);
+        binding.startLocation.setText(addresses[0]);
+        updateSearchUiWithPoint(fromCoordinates, addresses[0]);
+        toCoordinates = routePair.second.get(2);
+        binding.destinationLocation.setText(addresses[toIndex]);
+        updateSearchUiWithPoint(toCoordinates, addresses[toIndex]);
+        updateButtonEnabled();
     }
 
     private void handleSuggestionClick(AdapterView<?> parent, int position, PointType pointType) {
@@ -410,11 +477,13 @@ public class NavigationActivity extends BaseActivity {
             binding.startNavigationBtn.setVisibility(View.VISIBLE);
             binding.cancelButton.setVisibility(View.VISIBLE);
             binding.routeVisualizerSelector.setVisibility(View.VISIBLE);
+            binding.selectPreviousRoutesButton.setVisibility(View.INVISIBLE);
         } else {
             binding.getRouteBtn.setVisibility(View.VISIBLE);
             binding.startNavigationBtn.setVisibility(View.GONE);
             binding.cancelButton.setVisibility(View.GONE);
             binding.routeVisualizerSelector.setVisibility(View.GONE);
+            binding.selectPreviousRoutesButton.setVisibility(View.VISIBLE);
             // reset route information values
             binding.durationText.setText(null);
             mRoadNodeMarkers.getItems().clear();

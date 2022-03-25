@@ -142,7 +142,7 @@ public class MarkerFunct {
         return StreamSupport.stream(c).filter(filter).collect(Collectors.toList());
     }
 
-    private <S, T> List<T> simpleMap(Collection<S> c, Function<? super S, ? extends T> mapper) {
+    public static <S, T> List<T> simpleMap(Collection<S> c, Function<? super S, ? extends T> mapper) {
         return StreamSupport.stream(c).map(mapper).collect(Collectors.toList());
     }
 
