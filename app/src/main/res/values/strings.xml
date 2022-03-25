@@ -417,10 +417,10 @@
     <string name="navigation_steps">Navigationsschritte</string>
     <string name="record_with_nav">Fahrt zusammen mit Navigationsstart aufzeichnen</string>
     <string name="nav_intro_title">Einleitung</string>
-    <string name="nav_intro_message">Willkomen bei Simra-Nav!\nGib deinen Start- und Endpunkt ein, um eine Route zu finden.\nKlicke auf den unteren linken Knopf, um Informationen über Oberflächenbeschaffenheit oder Sicherheit zu bekommen.\nWenn du bererit bist, klicke auf Start!</string>
+    <string name="nav_intro_message">Willkomen bei Simra-Nav!\nGib deinen Start- und Endpunkt ein, um eine Route zu finden.\nKlicke auf "Route berechnen", um die Route für die ausgewählten Punkte zu bekommen.\nKlicke auf den unteren linken Knopf, um Informationen über Oberflächenbeschaffenheit oder Sicherheit zu bekommen.\nWenn du bereit bist, klicke auf Start!</string>
     <!-- menu options for visualization-->
     <string name="option_none">None</string>
     <string name="option_simra_safety_score">SimRa Safety-Score</string>
-    <string name="option_surface_quality">Oberfläschenbeschaffenheit</string>
+    <string name="option_surface_quality">Oberflächenbeschaffenheit</string>
     <string name="route_error">Fehler beim Abrufen der Route</string>
 </resources>

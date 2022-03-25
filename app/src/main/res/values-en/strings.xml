@@ -399,7 +399,7 @@
     <string name="navigation_steps">Navigation Steps</string>
     <string name="record_with_nav">Start recording with navigation</string>
     <string name="nav_intro_title">Introduction</string>
-    <string name="nav_intro_message">Welcome to Simra-Nav!\nEnter your start and destination address to find a route.\nClick on the lower left button to see safety or surface quality information for the route.\nWhen you\'re ready, click "start" to start the navigation!</string>
+    <string name="nav_intro_message">Welcome to Simra-Nav!\nEnter your start and destination address to find a route.\nClick on "Get route" to fetch the calculated route for your selected points.\nClick on the lower left button to see safety or surface quality information for the route.\nWhen you\'re ready, click "start" to start the navigation!</string>
     <!-- menu options for visualization-->
     <string name="option_none">None</string>
     <string name="option_simra_safety_score">SimRa safety score</string>

@@ -216,13 +216,13 @@ public class NavigationActivity extends BaseActivity {
         mapView.getOverlays().add(mRoadNodeMarkers);
 
         // show a dialog on first use
-        if (SharedPref.Settings.Navigation.getFirstTime(this)) {
+        if (!SharedPref.Settings.Navigation.getTutorialDone(this)) {
             new AlertDialog.Builder(this)
                     .setTitle(R.string.nav_intro_title)
                     .setMessage(R.string.nav_intro_message)
                     .setCancelable(true)
                     .setPositiveButton(getString(R.string.ok), (dialog, which) ->
-                            SharedPref.Settings.Navigation.setFirstTime(false, this)
+                            SharedPref.Settings.Navigation.setTutorialDone(true, this)
                     )
                     .create()
                     .show();

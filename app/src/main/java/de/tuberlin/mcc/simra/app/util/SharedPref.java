@@ -377,7 +377,7 @@ public class SharedPref {
 
         public static class Navigation {
             public static final String NAVIGATION_SETTINGS = SETTINGS + "Navigation-";
-            public static final String FIRST_TIME = NAVIGATION_SETTINGS + "First-Time";
+            public static final String TUTORIAL_DONE = NAVIGATION_SETTINGS + "Tutorial-Completed";
             public static final String SAFETY_SCORE = NAVIGATION_SETTINGS + "Safety-Score";
             public static final String SURFACE_QUALITY = NAVIGATION_SETTINGS + "Surface-Quality";
             public static final String SIMRA_SURFACE_QUALITY_ENABLED = NAVIGATION_SETTINGS + "Surface-Quality-Enabled";
@@ -416,12 +416,12 @@ public class SharedPref {
                 writeBooleanToAppSharedPrefsAsync(RECORD_WITH_NAVIGATION, enabled, context);
             }
 
-            public static boolean getFirstTime(Context context) {
-                return readBooleanFromAppSharedPrefs(FIRST_TIME, context);
+            public static boolean getTutorialDone(Context context) {
+                return readBooleanFromAppSharedPrefs(TUTORIAL_DONE, context);
             }
 
-            public static void setFirstTime(boolean enabled, Context context) {
-                writeBooleanToAppSharedPrefsAsync(FIRST_TIME, enabled, context);
+            public static void setTutorialDone(boolean completed, Context context) {
+                writeBooleanToAppSharedPrefsAsync(TUTORIAL_DONE, completed, context);
             }
         }
 
