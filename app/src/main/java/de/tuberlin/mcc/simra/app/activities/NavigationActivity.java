@@ -466,6 +466,10 @@ public class NavigationActivity extends BaseActivity {
                 Polyline roadOverlay = roadUtil.drawRoute(ScoreColorList.ScoreType.NONE);
                 mRoadOverlays = new Polyline[roads.length];
                 mRoadOverlays[0] = roadOverlay;
+                long endTime = System.currentTimeMillis();
+                Log.d(TAG + "_eval", "Finished route parser calculation: " + endTime);
+                Log.d(TAG + "_eval", "Route length: " + roadOverlay.getDistance());
+                Log.d(TAG + "_eval", "Route vertices: " + roadOverlay.getActualPoints().size());
             }
         }
 

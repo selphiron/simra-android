@@ -89,6 +89,9 @@ public class SimraNavService extends GraphHopperRoadManager {
         try {
             JSONObject jRoot = fetchRoute(waypoints);
             Log.d(TAG, "GraphHopper response: " + jRoot.toString());
+            // measure start time
+            long startTime = System.currentTimeMillis();
+            Log.d(TAG + "_eval", "Started route parser calculation: " + startTime);
             JSONArray jPaths = jRoot.optJSONArray("paths");
             if (jPaths == null || jPaths.length() == 0) {
                 SimraRoad[] defaultRoad = this.defaultRoad(waypoints);
