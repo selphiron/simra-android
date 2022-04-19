@@ -21,8 +21,11 @@ public class Profile {
     public List<Float> timeDistribution;
     public int numberOfScaryIncidents;
     public int behaviour;
+    public int safetyWeighting;
+    public int surfaceWeighting;
+    public boolean usesSimraSurface;
 
-    public Profile(int ageGroup, int gender, int region, int numberOfRides, int experience, long duration, int numberOfIncidents, long waitedTime, long distance, long co2, List<Float> timeDistribution, int numberOfScaryIncidents, int behaviour) {
+    public Profile(int ageGroup, int gender, int region, int numberOfRides, int experience, long duration, int numberOfIncidents, long waitedTime, long distance, long co2, List<Float> timeDistribution, int numberOfScaryIncidents, int behaviour, int safetyWeighting, int surfaceWeighting, boolean usesSimraSurface) {
         this.ageGroup = ageGroup;
         this.gender = gender;
         this.region = region;
@@ -36,6 +39,9 @@ public class Profile {
         this.timeDistribution = timeDistribution;
         this.numberOfScaryIncidents = numberOfScaryIncidents;
         this.behaviour = behaviour;
+        this.safetyWeighting = safetyWeighting;
+        this.surfaceWeighting = surfaceWeighting;
+        this.usesSimraSurface = usesSimraSurface;
     }
 
     private static SharedPreferences getSharedPreferences(Integer regionId, Context context) {
@@ -72,7 +78,10 @@ public class Profile {
                 sharedPreferences.getLong("Co2", 0),
                 timeDistribution,
                 sharedPreferences.getInt("NumberOfScary", 0),
-                sharedPreferences.getInt("Behaviour", -1)
+                sharedPreferences.getInt("Behaviour", -1),
+                sharedPreferences.getInt("Settings-Navigation-Safety-Score", 0),
+                sharedPreferences.getInt("Settings-Navigation-Surface-Quality", 0),
+                sharedPreferences.getBoolean("Settings-Navigation-Surface-Quality-Enabled", false)
         );
     }
 
@@ -127,6 +136,7 @@ public class Profile {
 
     /**
      * returns true if region is UNKNOWN (0) or other (3)
+     *
      * @param context
      * @return true if region is UNKNOWN (0) or other (3)
      */

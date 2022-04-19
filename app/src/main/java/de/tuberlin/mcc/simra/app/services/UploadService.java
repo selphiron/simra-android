@@ -1,5 +1,14 @@
 package de.tuberlin.mcc.simra.app.services;
 
+import static de.tuberlin.mcc.simra.app.util.SharedPref.lookUpIntSharedPrefs;
+import static de.tuberlin.mcc.simra.app.util.SharedPref.lookUpSharedPrefs;
+import static de.tuberlin.mcc.simra.app.util.SharedPref.writeIntToSharedPrefs;
+import static de.tuberlin.mcc.simra.app.util.SharedPref.writeToSharedPrefs;
+import static de.tuberlin.mcc.simra.app.util.SimRAuthenticator.getClientHash;
+import static de.tuberlin.mcc.simra.app.util.Utils.calculateCO2Savings;
+import static de.tuberlin.mcc.simra.app.util.Utils.getRegions;
+import static de.tuberlin.mcc.simra.app.util.Utils.readContentFromFile;
+
 import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
@@ -24,14 +33,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
 import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.R;
 import de.tuberlin.mcc.simra.app.entities.IncidentLog;
-import de.tuberlin.mcc.simra.app.entities.IncidentLogEntry;
 import de.tuberlin.mcc.simra.app.entities.MetaData;
 import de.tuberlin.mcc.simra.app.entities.MetaDataEntry;
 import de.tuberlin.mcc.simra.app.entities.Profile;
@@ -40,15 +47,6 @@ import de.tuberlin.mcc.simra.app.util.ForegroundServiceNotificationManager;
 import de.tuberlin.mcc.simra.app.util.IOUtils;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
 import de.tuberlin.mcc.simra.app.util.Utils;
-
-import static de.tuberlin.mcc.simra.app.util.SharedPref.lookUpIntSharedPrefs;
-import static de.tuberlin.mcc.simra.app.util.SharedPref.lookUpSharedPrefs;
-import static de.tuberlin.mcc.simra.app.util.SharedPref.writeIntToSharedPrefs;
-import static de.tuberlin.mcc.simra.app.util.SharedPref.writeToSharedPrefs;
-import static de.tuberlin.mcc.simra.app.util.SimRAuthenticator.getClientHash;
-import static de.tuberlin.mcc.simra.app.util.Utils.calculateCO2Savings;
-import static de.tuberlin.mcc.simra.app.util.Utils.getRegions;
-import static de.tuberlin.mcc.simra.app.util.Utils.readContentFromFile;
 
 public class UploadService extends Service {
 
@@ -288,7 +286,10 @@ public class UploadService extends Service {
                                 .append(regionProfile.numberOfIncidents).append(",")
                                 .append(regionProfile.waitedTime).append(",")
                                 .append(regionProfile.distance).append(",")
-                                .append(regionProfile.co2).append(",");
+                                .append(regionProfile.co2).append(",")
+                                .append(regionProfile.safetyWeighting).append(",")
+                                .append(regionProfile.surfaceWeighting).append(",")
+                                .append(regionProfile.usesSimraSurface).append(",");
                         for (int i = 0; i < 24; i++) {
                             profileContentToSend.append(regionProfile.timeDistribution.get(i)).append(",");
                         }
