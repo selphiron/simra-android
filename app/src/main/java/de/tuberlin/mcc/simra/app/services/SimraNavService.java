@@ -27,6 +27,9 @@ import de.tuberlin.mcc.simra.app.BuildConfig;
 import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
 
+/**
+ * Service Class containing methods to send requests to routing backend and parse responses.
+ */
 public class SimraNavService extends GraphHopperRoadManager {
 
     private static final String TAG = "SimraNavService_LOG";
@@ -39,6 +42,13 @@ public class SimraNavService extends GraphHopperRoadManager {
         this.context = context;
     }
 
+    /**
+     * Request a route from the backend.
+     *
+     * @param waypoints list of waypoints for which the route will be calculated
+     * @return JSON response of the backend
+     * @throws Exception generic exception (JSON parsing, network error)
+     */
     public JSONObject fetchRoute(ArrayList<GeoPoint> waypoints) throws Exception {
         // fetch route
         URL navUrl = new URL(mServiceUrl + "routing/route");
@@ -60,6 +70,13 @@ public class SimraNavService extends GraphHopperRoadManager {
         return new JSONObject(responseStringBuilder.toString());
     }
 
+    /**
+     * Returns the JSON request body for the routing request.
+     *
+     * @param waypoints list of waypoints for which the route will be calculated
+     * @return JSON body
+     * @throws JSONException error when constructing json
+     */
     protected JSONObject getRequestBody(ArrayList<GeoPoint> waypoints) throws JSONException {
         JSONObject json = new JSONObject();
         json.put("safety_weight", SharedPref.Settings.Navigation.getSafetyScoreWeighting(context));
@@ -77,6 +94,12 @@ public class SimraNavService extends GraphHopperRoadManager {
         return json;
     }
 
+    /**
+     * Method for returning default road when request goes wrong.
+     *
+     * @param waypoints list of locations for route calculation
+     * @return default road containing only selected locations (connected by straight line)
+     */
     protected SimraRoad[] defaultRoad(ArrayList<GeoPoint> waypoints) {
         SimraRoad[] roads = new SimraRoad[1];
         roads[0] = new SimraRoad(waypoints);
@@ -84,6 +107,13 @@ public class SimraNavService extends GraphHopperRoadManager {
     }
 
 
+    /**
+     * Return a list of calculated roads by the routing engine.
+     *
+     * @param waypoints    list of waypoints for which the route will be calculated
+     * @param getAlternate whether alternate routes should be calculated
+     * @return calculated road with safety and surface scores
+     */
     @Override
     public SimraRoad[] getRoads(ArrayList<GeoPoint> waypoints, boolean getAlternate) {
         try {
@@ -141,6 +171,15 @@ public class SimraNavService extends GraphHopperRoadManager {
         }
     }
 
+    /**
+     * Method for converting route score details into integer array
+     *
+     * @param details    JSON array containing details
+     * @param isSurface  whether the details are surface details
+     * @param pathLength number of segments
+     * @return integer array containing one score per road segment
+     * @throws JSONException json parsing exception
+     */
     private int[] handleDetails(JSONArray details, boolean isSurface, int pathLength) throws JSONException {
         int[] values = new int[pathLength - 1];
         for (int i = 0; i < details.length(); i++) {
@@ -166,6 +205,12 @@ public class SimraNavService extends GraphHopperRoadManager {
         return values;
     }
 
+    /**
+     * returns a score value for a specific OSM surface type
+     *
+     * @param surfaceType the surface type
+     * @return score ranging from 1 to 5
+     */
     private int getSurfaceValue(String surfaceType) {
         switch (surfaceType) {
             case "paving_stones":

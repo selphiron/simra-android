@@ -4,6 +4,9 @@ import androidx.annotation.NonNull;
 
 import org.osmdroid.util.GeoPoint;
 
+/**
+ * Data class containing a String address and its corresponding location in GeoPoint form.
+ */
 public class AddressPair {
 
     private final String address;

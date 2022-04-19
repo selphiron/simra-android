@@ -8,6 +8,9 @@ import org.osmdroid.views.overlay.advancedpolyline.ColorMapping;
 import de.tuberlin.mcc.simra.app.R;
 
 
+/**
+ * Class for mapping safety/surface quality scores to color within road segments.
+ */
 public class ScoreColorList implements ColorMapping {
 
     public enum ScoreType {NONE, SURFACE_SIMRA, SURFACE_OSM, SAFETY}
@@ -26,6 +29,12 @@ public class ScoreColorList implements ColorMapping {
         this.context = context;
     }
 
+    /**
+     * Get the color for a specific segment.
+     *
+     * @param pSegmentIndex index of the segment.
+     * @return color in integer resource form
+     */
     @Override
     public int getColorForIndex(int pSegmentIndex) {
         if (osmSurfaceValuesList == null || simraSurfaceQualityList == null || safetyScoreList == null) {
@@ -43,6 +52,12 @@ public class ScoreColorList implements ColorMapping {
         }
     }
 
+    /**
+     * Get the corresponding color for a specific surface quality score.
+     *
+     * @param value the surface quality score
+     * @return color in integer resource form
+     */
     private int getSurfaceQualityColor(int value) {
         TypedArray colorScale = context.getResources().obtainTypedArray(R.array.scoreColorScale);
         if (value == 0)
@@ -52,6 +67,12 @@ public class ScoreColorList implements ColorMapping {
         return color;
     }
 
+    /**
+     * Get the corresponding color for a specific safety score.
+     *
+     * @param value the safety score
+     * @return color in integer resource form
+     */
     private int getSafetyScoreColor(int value) {
         if (value <= 10) {
             return context.getColor(R.color.score1);

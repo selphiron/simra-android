@@ -11,6 +11,9 @@ import org.osmdroid.util.GeoPoint;
 
 import java.util.ArrayList;
 
+/**
+ * Custom extension of Road containing additional properties for score values.
+ */
 public class SimraRoad extends Road implements Parcelable {
     public int[] safetyScoreSegmentValues;
     public int[] simraSurfaceQualitySegmentValues;

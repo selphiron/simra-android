@@ -30,6 +30,9 @@ import de.tuberlin.mcc.simra.app.R;
 import de.tuberlin.mcc.simra.app.entities.ScoreColorList;
 import de.tuberlin.mcc.simra.app.entities.SimraRoad;
 
+/**
+ * Utility class containing methods to operate on the returned route.
+ */
 public class RoadUtil {
     MapView mapView;
     SimraRoad road;
@@ -47,7 +50,12 @@ public class RoadUtil {
         this.context = context;
     }
 
-
+    /**
+     * Draws the route with corresponding nodes containing instructions.
+     *
+     * @param scoreType the score type to display the route with (safety/surface quality)
+     * @return the Polyline that was drawn
+     */
     public Polyline drawRoute(ScoreColorList.ScoreType scoreType) {
         roadNodeMarkers.getItems().clear();
         List<Overlay> mapOverlays = mapView.getOverlays();
@@ -84,6 +92,9 @@ public class RoadUtil {
         mapView.invalidate();
     }
 
+    /**
+     * Adds instruction nodes for the calculated route. Each node has a popup window that can be displayed on tap.
+     */
     public void putRoadNodes() {
         roadNodeMarkers.getItems().clear();
         int n = road.mNodes.size();
@@ -113,6 +124,14 @@ public class RoadUtil {
         iconIds.recycle();
     }
 
+    /**
+     * Sets the marker icon for a given marker
+     *
+     * @param marker       the marker in question
+     * @param iconResource Resource ID for marker icon.
+     * @param color        the color of the icon
+     * @param ctx          generic context
+     */
     public static void setMarkerIcon(Marker marker, int iconResource, int color, Context ctx) {
         Drawable icon = ResourcesCompat.getDrawable(ctx.getResources(), iconResource, null);
         // set icon tint
@@ -122,6 +141,14 @@ public class RoadUtil {
         marker.setIcon(icon);
     }
 
+    /**
+     * Returns the instruction content for a given node of the route.
+     *
+     * @param node    the node in question
+     * @param index   index of the node
+     * @param context generic context
+     * @return A pair containing a pair of an instruction title and the duration, and the corresponding navigation instruction image
+     */
     public static Pair<Pair<String, String>, Drawable> getInstructionContent(RoadNode node, int index, Context context) {
         String step = context.getString(R.string.step) + " " + (index + 1);
         String instruction = node.mInstructions == null ? "" : node.mInstructions;
@@ -138,6 +165,14 @@ public class RoadUtil {
         return new Pair<>(new Pair<>(headerText, durationText), image);
     }
 
+    /**
+     * Returns the index of the next node that needs to be visited.
+     *
+     * @param lastVisitedNodeIndex index of the node that was last visited
+     * @param road                 SimraRoad in which the node index needs to be found
+     * @param currentLocation      current location of the user
+     * @return node index
+     */
     public static int getNextNodeIndex(int lastVisitedNodeIndex, SimraRoad road, GeoPoint currentLocation) {
         // init vars
         double distanceShortest = currentLocation.distanceToAsDouble(road.mNodes.get(0).mLocation);

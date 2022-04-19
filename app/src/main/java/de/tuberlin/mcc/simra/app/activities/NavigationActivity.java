@@ -141,6 +141,7 @@ public class NavigationActivity extends BaseActivity {
                 e.printStackTrace();
             }
         } else {
+            // animate to last known location for initial view
             SharedPreferences sharedPrefs = getSharedPreferences("simraPrefs", Context.MODE_PRIVATE);
             if (sharedPrefs.contains("lastLoc_latitude") & sharedPrefs.contains("lastLoc_longitude")) {
                 GeoPoint lastLoc = new GeoPoint(Double.parseDouble(sharedPrefs.getString("lastLoc_latitude", "")),
@@ -230,7 +231,7 @@ public class NavigationActivity extends BaseActivity {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Choose a saved route");
                 String[] addresses = MarkerFunct.simpleMap(routesList, pair -> pair.first).toArray(new String[0]);
-                ;
+                // click listener to prefill autocomplete items
                 builder.setItems(addresses, (dialog, which) -> setRouteFields(routesList.get(which)));
                 AlertDialog dialog = builder.create();
                 dialog.show();
@@ -278,6 +279,11 @@ public class NavigationActivity extends BaseActivity {
         }
     }
 
+    /**
+     * Set routing fields with saved entry
+     *
+     * @param routePair the route pair to set the fields with
+     */
     private void setRouteFields(Pair<String, List<GeoPoint>> routePair) {
         String[] addresses = routePair.first.split(" - ");
         boolean withVia = addresses.length == 3;
@@ -296,6 +302,13 @@ public class NavigationActivity extends BaseActivity {
         updateButtonEnabled();
     }
 
+    /**
+     * Handles a user click on a location suggestion in the autocomplete list
+     *
+     * @param parent    parent list adapter
+     * @param position  position of the clicked item
+     * @param pointType point type of the search box (start, via, destination)
+     */
     private void handleSuggestionClick(AdapterView<?> parent, int position, PointType pointType) {
         Utils.hideKeyboard(this);
         AutocompleteAdapter adapter = (AutocompleteAdapter) parent.getAdapter();
@@ -317,6 +330,12 @@ public class NavigationActivity extends BaseActivity {
         updateSearchUiWithPoint(coordinates, item.toString());
     }
 
+    /**
+     * Handler to get addresses for a user search
+     *
+     * @param textView the textview we perform the search in
+     * @return the Handler
+     */
     private Handler getAutocompleteHandler(AutoCompleteTextView textView) {
         return new Handler(msg -> {
             if (msg.what == GEO_SEARCH && !TextUtils.isEmpty(textView.getText()))
@@ -368,6 +387,12 @@ public class NavigationActivity extends BaseActivity {
         mapView.getOverlays().add(marker);
     }
 
+    /**
+     * TextWatcher for user location searches
+     *
+     * @param handler Handler of the autocomplete textview, executes a geocoding task
+     * @return the TextWatcher
+     */
     private TextWatcher getAutocompleteTextWatcher(Handler handler) {
         return new TextWatcher() {
             @Override
@@ -378,6 +403,7 @@ public class NavigationActivity extends BaseActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 handler.removeMessages(GEO_SEARCH);
+                // delay for better UX and decreasing request rate
                 handler.sendEmptyMessageDelayed(GEO_SEARCH, 500);
             }
 
@@ -388,10 +414,19 @@ public class NavigationActivity extends BaseActivity {
         };
     }
 
+    /**
+     * Enables or disables route fetching button
+     */
     private void updateButtonEnabled() {
         binding.getRouteBtn.setEnabled(fromCoordinates != null && toCoordinates != null);
     }
 
+    /**
+     * Fills the autocomplete list with found addresses
+     *
+     * @param searchEntry user search string
+     * @param textView    AutoCompleteTextView to fill options for
+     */
     private void getAddresses(String searchEntry, AutoCompleteTextView textView) {
         try {
             List<Address> results = new ReverseGeocoderTask().execute(searchEntry).get();
@@ -407,6 +442,9 @@ public class NavigationActivity extends BaseActivity {
         }
     }
 
+    /**
+     * AsyncTask finding an address string for a specific GeoPoint
+     */
     private class GeocoderTask extends AsyncTask<GeoPoint, Void, String> {
         @Override
         protected String doInBackground(GeoPoint... geoPoints) {
@@ -431,6 +469,9 @@ public class NavigationActivity extends BaseActivity {
         }
     }
 
+    /**
+     * AsyncTask finding an address for a search string
+     */
     private class ReverseGeocoderTask extends AsyncTask<String, Void, List<Address>> {
         @Override
         protected List<Address> doInBackground(String... strings) {
@@ -444,12 +485,16 @@ public class NavigationActivity extends BaseActivity {
         }
     }
 
+    /**
+     * AsyncTask performing a query to the routing backend
+     */
     private class FetchRouteTask extends AsyncTask<ArrayList<GeoPoint>, Void, SimraRoad[]> {
         SimraNavService navService;
 
         @Override
         protected SimraRoad[] doInBackground(ArrayList<GeoPoint>... arrayLists) {
             ArrayList<GeoPoint> routePoints = arrayLists[0];
+            // instantiate navigation service
             navService = new SimraNavService(NavigationActivity.this);
             return navService.getRoads(routePoints, false);
         }
@@ -463,6 +508,7 @@ public class NavigationActivity extends BaseActivity {
                 toggleButtons(true);
                 mRoads = roads;
                 RoadUtil roadUtil = new RoadUtil(mapView, roads[0], null, mRoadNodeMarkers, NavigationActivity.this);
+                // draw route and add to overlays
                 Polyline roadOverlay = roadUtil.drawRoute(ScoreColorList.ScoreType.NONE);
                 mRoadOverlays = new Polyline[roads.length];
                 mRoadOverlays[0] = roadOverlay;
@@ -471,6 +517,11 @@ public class NavigationActivity extends BaseActivity {
 
     }
 
+    /**
+     * Toggles navigation buttons and resets route visualization depending on whether route requested
+     *
+     * @param routeFetched true if we requested a route calculation
+     */
     private void toggleButtons(boolean routeFetched) {
         if (routeFetched) {
             binding.getRouteBtn.setVisibility(View.INVISIBLE);
@@ -495,6 +546,12 @@ public class NavigationActivity extends BaseActivity {
         }
     }
 
+    /**
+     * Converts an address into string form.
+     *
+     * @param address the address object
+     * @return address string
+     */
     private String addressToString(Address address) {
         StringBuilder addressBuilder = new StringBuilder();
         int maxLines = address.getMaxAddressLineIndex();
