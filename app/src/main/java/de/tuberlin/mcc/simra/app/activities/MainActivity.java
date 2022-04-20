@@ -182,6 +182,7 @@ public class MainActivity extends BaseActivity
             }
         } else if (requestCode == REQUEST_NAV) {
             if (resultCode == RESULT_OK) {
+                // start navigation if route calculated
                 navRoad = data.getParcelableExtra("roads");
                 Log.d(TAG, "Starting navigation with: " + navRoad.getLengthDurationText(this, 0));
                 RoadUtil roadUtil = new RoadUtil(mMapView, navRoad, roadOverlay, roadNodeMarkers, this);
@@ -191,6 +192,9 @@ public class MainActivity extends BaseActivity
         }
     }
 
+    /**
+     * Starts the navigation process within the main activity
+     */
     private void startNavigation() {
         // check if recording should be enabled with nav
         if (SharedPref.Settings.Navigation.getStartRecordingWithNavigation(this)) {
@@ -206,6 +210,11 @@ public class MainActivity extends BaseActivity
         setNavigationText(0);
     }
 
+    /**
+     * Sets the text for the current navigation instruction
+     *
+     * @param index position of the instruction node
+     */
     private void setNavigationText(int index) {
         Pair<Pair<String, String>, Drawable> content = getInstructionContent(navRoad.mNodes.get(index), index, this);
         RowNavigationBinding currentStep = binding.appBarMain.currentInstructionContainer;
@@ -214,6 +223,9 @@ public class MainActivity extends BaseActivity
         currentStep.navigationStepImage.setImageDrawable(content.second);
     }
 
+    /**
+     * Cancels the ongoing navigation
+     */
     private void cancelNavigation() {
         // cancel recording with navigation if enabled
         if (SharedPref.Settings.Navigation.getStartRecordingWithNavigation(this)) {
@@ -356,6 +368,7 @@ public class MainActivity extends BaseActivity
             startRecording();
         });
 
+        // click listener to start navigation activity or cancel ongoing navigation
         binding.appBarMain.buttonNavigate.setOnClickListener(v -> {
             if (navRoad == null) {
                 startActivityForResult(new Intent(this, NavigationActivity.class), REQUEST_NAV);
@@ -364,10 +377,12 @@ public class MainActivity extends BaseActivity
             }
         });
 
+        // click listener to open full navigation instruction list
         binding.appBarMain.currentInstructionCard.setOnClickListener(v ->
                 binding.appBarMain.routeInstructionsWindow.getRoot().setVisibility(View.VISIBLE)
         );
 
+        // click listener to close navigation instruction list
         binding.appBarMain.routeInstructionsWindow.cancelButton.setOnClickListener(v ->
                 binding.appBarMain.routeInstructionsWindow.getRoot().setVisibility(View.GONE)
         );
@@ -735,6 +750,11 @@ public class MainActivity extends BaseActivity
         return true;
     }
 
+    /**
+     * Location listener to update navigation instructions depending on location
+     *
+     * @param location the current device location
+     */
     @Override
     public void onLocationChanged(Location location) {
         // update navigation instructions throughout location changes
@@ -923,6 +943,12 @@ public class MainActivity extends BaseActivity
             return false;
         }
 
+        /**
+         * Long press helper to display routing options for selected location
+         *
+         * @param p selected geopoint
+         * @return boolean
+         */
         @Override
         public boolean longPressHelper(GeoPoint p) {
             // only show menu if navigation not running

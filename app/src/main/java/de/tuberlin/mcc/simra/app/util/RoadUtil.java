@@ -104,6 +104,7 @@ public class RoadUtil {
         for (int i = 0; i < n; i++) {
             RoadNode node = road.mNodes.get(i);
             String instructions = (node.mInstructions == null ? "" : node.mInstructions);
+            // set marker with popup window containing navigation instructions
             Marker nodeMarker = new Marker(mapView);
             nodeMarker.setTitle(context.getString(R.string.step) + " " + (i + 1));
             nodeMarker.setSnippet(instructions);

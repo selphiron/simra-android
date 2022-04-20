@@ -61,6 +61,7 @@ import de.tuberlin.mcc.simra.app.util.SharedPref;
 import de.tuberlin.mcc.simra.app.util.Utils;
 
 /**
+ * Activity for selecting locations and calculating the route. Shows different scoring views (safety, surface quality)
  * Based on OSMNavigator MapActivity. License contained within application.
  * OSMBonusPack is used throughout this application, and OSMNavigator is also licensed under OSMBonuspack.
  * <a href="https://github.com/MKergall/osmbonuspack/blob/master/OSMNavigator/src/main/java/com/osmnavigator/MapActivity.java">MapActivity</a>
@@ -80,8 +81,8 @@ public class NavigationActivity extends BaseActivity {
     private final int GEO_SEARCH = 10;
 
     public static SimraRoad[] mRoads;  //made static to pass between activities
-    protected Polyline[] mRoadOverlays;
-    protected FolderOverlay mRoadNodeMarkers;
+    protected Polyline[] mRoadOverlays; // list of road overlays showing routes
+    protected FolderOverlay mRoadNodeMarkers; // folder containing markers of road overlay
 
     private enum PointType {START, VIA, END}
 
@@ -120,7 +121,7 @@ public class NavigationActivity extends BaseActivity {
         mapController = (MapController) mapView.getController();
         mapController.setZoom(ZOOM_LEVEL);
 
-        // if opened from map selection, set data
+        // if opened from map selection, set data (start/destination location)
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             double lat = extras.getDouble("lat");
@@ -141,7 +142,7 @@ public class NavigationActivity extends BaseActivity {
                 e.printStackTrace();
             }
         } else {
-            // animate to last known location for initial view
+            // animate to last known location for initial view if no points selected
             SharedPreferences sharedPrefs = getSharedPreferences("simraPrefs", Context.MODE_PRIVATE);
             if (sharedPrefs.contains("lastLoc_latitude") & sharedPrefs.contains("lastLoc_longitude")) {
                 GeoPoint lastLoc = new GeoPoint(Double.parseDouble(sharedPrefs.getString("lastLoc_latitude", "")),
@@ -167,12 +168,15 @@ public class NavigationActivity extends BaseActivity {
                 RoadUtil roadUtil = new RoadUtil(mapView, mRoads[0], mRoadOverlays[0], mRoadNodeMarkers, this);
                 int itemId = item.getItemId();
                 if (itemId == R.id.option_none) {
+                    // default view
                     roadUtil.paintRoad(ScoreColorList.ScoreType.NONE);
                     return true;
                 } else if (itemId == R.id.option_safety_score) {
+                    // safety scores view
                     roadUtil.paintRoad(ScoreColorList.ScoreType.SAFETY);
                     return true;
                 } else if (itemId == R.id.option_surface_quality) {
+                    // surface quality view
                     boolean simraEnabled = SharedPref.Settings.Navigation.getSimraSurfaceQualityEnabled(this);
                     ScoreColorList.ScoreType surfaceType = ScoreColorList.ScoreType.SURFACE_OSM;
                     if (simraEnabled)
@@ -213,6 +217,7 @@ public class NavigationActivity extends BaseActivity {
             for (List<Pair<String, GeoPoint>> points : pointsList) {
                 StringBuilder stringBuilder = new StringBuilder();
                 String prefix = "";
+                // construct address list string
                 for (Pair<String, GeoPoint> point : points) {
                     if (point.second == null) {
                         continue;
@@ -285,8 +290,10 @@ public class NavigationActivity extends BaseActivity {
      * @param routePair the route pair to set the fields with
      */
     private void setRouteFields(Pair<String, List<GeoPoint>> routePair) {
+        // the addresses are separated by a "-"
         String[] addresses = routePair.first.split(" - ");
         boolean withVia = addresses.length == 3;
+        // if there are 3 addresses this means there is a via point, so the destination is on index 2
         int toIndex = addresses.length == 3 ? 2 : 1;
         if (withVia) {
             viaCoordinates = routePair.second.get(1);
@@ -344,6 +351,12 @@ public class NavigationActivity extends BaseActivity {
         });
     }
 
+    /**
+     * Updates the map view with corresponding point and zooms the map to show all points
+     *
+     * @param point   newly added point
+     * @param address address string of the point
+     */
     private void updateSearchUiWithPoint(GeoPoint point, String address) {
         mapView.getOverlays().clear();
         List<GeoPoint> pointList = new ArrayList<>();
@@ -359,6 +372,7 @@ public class NavigationActivity extends BaseActivity {
             pointList.add(toCoordinates);
             addMarker(toCoordinates, PointType.END, address);
         }
+        // zoom to bounding box containing all points
         if (pointList.size() > 1) {
             BoundingBox boundingBox = BoundingBox.fromGeoPointsSafe(pointList);
             mapView.zoomToBoundingBox(boundingBox, true);

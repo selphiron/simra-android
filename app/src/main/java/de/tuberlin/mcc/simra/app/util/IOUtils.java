@@ -312,6 +312,13 @@ public class IOUtils {
         fOut.close();
     }
 
+    /**
+     * Stores navigation points into a json file
+     *
+     * @param points  list of route points in address string - geopoint form
+     * @param context generic context
+     * @throws JSONException json generation error
+     */
     public static void saveNavPoints(List<Pair<String, GeoPoint>> points, Context context) throws JSONException {
         String locationsString = Utils.readContentFromFile("previous_nav_locations.json", context);
         // create a location set from scratch
@@ -347,22 +354,33 @@ public class IOUtils {
         Utils.overwriteFile(newSets.toString(), Files.getNavLocationsFile(context));
     }
 
+    /**
+     * Fetches last stored navigation locations
+     *
+     * @param context generic context
+     * @return navigation locations in List form (list of lists of address string - geopoint pairs)
+     */
     public static List<List<Pair<String, GeoPoint>>> getLastNavLocations(Context context) {
         String locationsString = Utils.readContentFromFile("previous_nav_locations.json", context);
         List<List<Pair<String, GeoPoint>>> points = new ArrayList<>();
+        // if file is empty, return empty list
         if (locationsString.isEmpty()) {
             return new ArrayList<>();
         } else {
             try {
+                // iterate over user routing requests
                 JSONArray savedLocationSets = new JSONArray(locationsString);
                 for (int i = 0; i < savedLocationSets.length(); i++) {
                     JSONArray locationSet = savedLocationSets.getJSONArray(i);
                     List<Pair<String, GeoPoint>> locations = new ArrayList<>();
+                    // iterate over user locations in routing request
                     for (int j = 0; j < locationSet.length(); j++) {
                         JSONObject location = locationSet.getJSONObject(j);
+                        // if no location, (i.e., empty address field) add placeholder location
                         if (location.getBoolean("null")) {
                             locations.add(new Pair<>("", null));
                         } else {
+                            // add address location pair to list
                             locations.add(
                                     new Pair<>(
                                             location.getString("address"),
