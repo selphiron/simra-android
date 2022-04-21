@@ -382,6 +382,8 @@ public class SharedPref {
             public static final String SURFACE_QUALITY = NAVIGATION_SETTINGS + "Surface-Quality";
             public static final String SIMRA_SURFACE_QUALITY_ENABLED = NAVIGATION_SETTINGS + "Surface-Quality-Enabled";
             public static final String RECORD_WITH_NAVIGATION = NAVIGATION_SETTINGS + "Record-With-Navigation";
+            public static final String USE_LIT_STREETS = NAVIGATION_SETTINGS + "Use-Lit-Streets";
+            public static final String AVOID_ACCIDENTS = NAVIGATION_SETTINGS + "Avoid-Accidents";
 
 
             public static void setSafetyScoreWeighting(int weighting, Context context) {
@@ -414,6 +416,22 @@ public class SharedPref {
 
             public static void setStartRecordingWithNavigation(boolean enabled, Context context) {
                 writeBooleanToAppSharedPrefsAsync(RECORD_WITH_NAVIGATION, enabled, context);
+            }
+
+            public static boolean getUseLitStreets(Context context) {
+                return readBooleanFromAppSharedPrefs(USE_LIT_STREETS, context);
+            }
+
+            public static void setUseLitStreets(boolean enabled, Context context) {
+                writeBooleanToAppSharedPrefsAsync(USE_LIT_STREETS, enabled, context);
+            }
+
+            public static boolean getAvoidRoadsWithAccidents(Context context) {
+                return readBooleanFromAppSharedPrefs(AVOID_ACCIDENTS, context);
+            }
+
+            public static void setAvoidRoadsWithAccidents(boolean enabled, Context context) {
+                writeBooleanToAppSharedPrefsAsync(AVOID_ACCIDENTS, enabled, context);
             }
 
             public static boolean getTutorialDone(Context context) {

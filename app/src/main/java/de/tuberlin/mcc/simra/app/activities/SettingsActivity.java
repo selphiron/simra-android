@@ -107,6 +107,16 @@ public class SettingsActivity extends BaseActivity {
         binding.simraSurfaceEnabledCheckbox.setOnCheckedChangeListener((buttonView, isChecked) ->
                 SharedPref.Settings.Navigation.setSimraSurfaceQualityEnabled(isChecked, this)
         );
+        // Checkbox: Use lit streets for routing
+        binding.useLitStreetsCheckbox.setChecked(SharedPref.Settings.Navigation.getUseLitStreets(this));
+        binding.useLitStreetsCheckbox.setOnCheckedChangeListener((buttonView, isChecked) ->
+                SharedPref.Settings.Navigation.setUseLitStreets(isChecked, this)
+        );
+        // Checkbox: Avoid streets with past accidents
+        binding.avoidAccidentStreetsCheckbox.setChecked(SharedPref.Settings.Navigation.getAvoidRoadsWithAccidents(this));
+        binding.avoidAccidentStreetsCheckbox.setOnCheckedChangeListener((buttonView, isChecked) ->
+                SharedPref.Settings.Navigation.setAvoidRoadsWithAccidents(isChecked, this)
+        );
         // Checkbox: Start and stop recording together with navigation
         binding.recordWithNavCheckbox.setChecked(SharedPref.Settings.Navigation.getStartRecordingWithNavigation(this));
         binding.recordWithNavCheckbox.setOnCheckedChangeListener((buttonView, isChecked) ->

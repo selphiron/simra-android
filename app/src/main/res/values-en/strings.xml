@@ -394,6 +394,8 @@
     <string name="surface_quality_seekbar_hint">Surface quality weighting (higher means more importance)</string>
     <string name="step">Step</string>
     <string name="enable_simra_surface_hint">Use SimRa data for surface quality weighting</string>
+    <string name="enable_lit_streets_hint">Use streets that are illuminated</string>
+    <string name="enable_avoid_accidents_hint">Avoid streets that had accidents happen in the past</string>
     <string name="start">Start</string>
     <string name="route">Route</string>
     <string name="navigation_steps">Navigation Steps</string>

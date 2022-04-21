@@ -427,6 +427,22 @@
                     android:text="@string/enable_simra_surface_hint" />
 
                 <CheckBox
+                    android:id="@+id/useLitStreetsCheckbox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:singleLine="false"
+                    android:text="@string/enable_lit_streets_hint" />
+
+                <CheckBox
+                    android:id="@+id/avoidAccidentStreetsCheckbox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:singleLine="false"
+                    android:text="@string/enable_avoid_accidents_hint" />
+
+                <CheckBox
                     android:id="@+id/recordWithNavCheckbox"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
