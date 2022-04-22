@@ -1,5 +1,8 @@
 package de.tuberlin.mcc.simra.app.activities;
 
+import static de.tuberlin.mcc.simra.app.util.Constants.ZOOM_LEVEL;
+import static de.tuberlin.mcc.simra.app.util.SharedPref.lookUpIntSharedPrefs;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -8,7 +11,6 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -58,14 +60,12 @@ import de.tuberlin.mcc.simra.app.util.IOUtils;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
 import de.tuberlin.mcc.simra.app.util.Utils;
 
-import static de.tuberlin.mcc.simra.app.util.Constants.ZOOM_LEVEL;
-import static de.tuberlin.mcc.simra.app.util.SharedPref.lookUpIntSharedPrefs;
-
 public class ShowRouteActivity extends BaseActivity {
 
     private static final String TAG = "ShowRouteActivity_LOG";
     private static final String EXTRA_RIDE_ID = "EXTRA_RIDE_ID";
     private static final String EXTRA_STATE = "EXTRA_STATE";
+    private static final String USED_NAV = "USED_NAV";
     private static final String EXTRA_SHOW_RIDE_SETTINGS_DIALOG = "EXTRA_SHOW_RIDE_SETTINGS_DIALOG";
     public ExecutorService pool = Executors.newFixedThreadPool(6);
 
@@ -86,6 +86,7 @@ public class ShowRouteActivity extends BaseActivity {
     int trailer;
     int pLoc;
     int rideId;
+    boolean usedNav;
     File gpsFile;
     Polyline route;
     Polyline editableRoute;
@@ -130,10 +131,11 @@ public class ShowRouteActivity extends BaseActivity {
         return new BoundingBox(border[0] + 0.001, border[1] + 0.001, border[2] - 0.001, border[3] - 0.001);
     }
 
-    public static void startShowRouteActivity(int rideId, Integer state, boolean showRideSettingsDialog, Context context) {
+    public static void startShowRouteActivity(int rideId, Integer state, boolean showRideSettingsDialog, boolean usedNav, Context context) {
         Intent intent = new Intent(context, ShowRouteActivity.class);
         intent.putExtra(EXTRA_RIDE_ID, rideId);
         intent.putExtra(EXTRA_STATE, state);
+        intent.putExtra(USED_NAV, usedNav);
         intent.putExtra(EXTRA_SHOW_RIDE_SETTINGS_DIALOG, showRideSettingsDialog);
         context.startActivity(intent);
 
@@ -178,6 +180,7 @@ public class ShowRouteActivity extends BaseActivity {
             throw new RuntimeException("Extra: " + EXTRA_RIDE_ID + " not defined.");
         }
         rideId = getIntent().getIntExtra(EXTRA_RIDE_ID, 0);
+        usedNav = getIntent().getBooleanExtra(USED_NAV, false);
         state = getIntent().getIntExtra(EXTRA_STATE, MetaData.STATE.JUST_RECORDED);
         showRideSettingsDialog = getIntent().getBooleanExtra(EXTRA_SHOW_RIDE_SETTINGS_DIALOG, false);
 
@@ -403,6 +406,7 @@ public class ShowRouteActivity extends BaseActivity {
         metaDataEntry.numberOfScaryIncidents = IncidentLog.getScaryIncidents(incidentLog).size();
         metaDataEntry.region = lookUpIntSharedPrefs("Region", 0, "Profile", this);
         metaDataEntry.state = MetaData.STATE.ANNOTATED;
+        metaDataEntry.usedNav = usedNav;
         MetaData.updateOrAddMetaDataEntryForRide(metaDataEntry, this);
 
         Toast.makeText(this, getString(R.string.savedRide), Toast.LENGTH_SHORT).show();

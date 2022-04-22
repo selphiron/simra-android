@@ -1,5 +1,12 @@
 package de.tuberlin.mcc.simra.app.services;
 
+import static de.tuberlin.mcc.simra.app.services.OBSService.ACTION_VALUE_RECEIVED_CLOSEPASS_EVENT;
+import static de.tuberlin.mcc.simra.app.services.OBSService.ACTION_VALUE_RECEIVED_DISTANCE;
+import static de.tuberlin.mcc.simra.app.services.OBSService.EXTRA_VALUE_SERIALIZED;
+import static de.tuberlin.mcc.simra.app.util.SharedPref.lookUpIntSharedPrefs;
+import static de.tuberlin.mcc.simra.app.util.Utils.mergeGPSandSensorLines;
+import static de.tuberlin.mcc.simra.app.util.Utils.overwriteFile;
+
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.Service;
@@ -46,13 +53,6 @@ import de.tuberlin.mcc.simra.app.util.IOUtils;
 import de.tuberlin.mcc.simra.app.util.IncidentBroadcaster;
 import de.tuberlin.mcc.simra.app.util.SharedPref;
 import de.tuberlin.mcc.simra.app.util.UnitHelper;
-
-import static de.tuberlin.mcc.simra.app.services.OBSService.ACTION_VALUE_RECEIVED_CLOSEPASS_EVENT;
-import static de.tuberlin.mcc.simra.app.services.OBSService.ACTION_VALUE_RECEIVED_DISTANCE;
-import static de.tuberlin.mcc.simra.app.services.OBSService.EXTRA_VALUE_SERIALIZED;
-import static de.tuberlin.mcc.simra.app.util.SharedPref.lookUpIntSharedPrefs;
-import static de.tuberlin.mcc.simra.app.util.Utils.mergeGPSandSensorLines;
-import static de.tuberlin.mcc.simra.app.util.Utils.overwriteFile;
 
 public class RecorderService extends Service implements SensorEventListener, LocationListener {
     public static final String TAG = "RecorderService_LOG:";
@@ -341,7 +341,7 @@ public class RecorderService extends Service implements SensorEventListener, Loc
             int region = lookUpIntSharedPrefs("Region", 0, "Profile", this);
             accGpsString = mergeGPSandSensorLines(gpsLines,sensorLines);
             overwriteFile((IOUtils.Files.getFileInfoLine() + DataLog.DATA_LOG_HEADER + System.lineSeparator() + accGpsString), IOUtils.Files.getGPSLogFile(key, false, this));
-            MetaData.updateOrAddMetaDataEntryForRide(new MetaDataEntry(key, startTime, endTime, MetaData.STATE.JUST_RECORDED, 0, waitedTime, Math.round(route.getDistance()), 0, region), this);
+            MetaData.updateOrAddMetaDataEntryForRide(new MetaDataEntry(key, startTime, endTime, MetaData.STATE.JUST_RECORDED, 0, waitedTime, Math.round(route.getDistance()), 0, region, false), this);
             IncidentLog.saveIncidentLog(incidentLog, this);
             editor.putInt("RIDE-KEY", key + 1);
             editor.apply();

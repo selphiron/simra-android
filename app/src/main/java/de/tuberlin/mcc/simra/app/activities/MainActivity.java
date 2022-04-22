@@ -216,7 +216,8 @@ public class MainActivity extends BaseActivity
 
     private void cancelNavigation() {
         // cancel recording with navigation if enabled
-        if (SharedPref.Settings.Navigation.getStartRecordingWithNavigation(this)) {
+        boolean navWithRecording = SharedPref.Settings.Navigation.getStartRecordingWithNavigation(this);
+        if (navWithRecording) {
             binding.appBarMain.buttonStopRecording.performClick();
         }
         binding.appBarMain.currentInstructionCard.setVisibility(View.GONE);
@@ -226,7 +227,10 @@ public class MainActivity extends BaseActivity
         roadNodeMarkers.getItems().clear();
         mMapView.getOverlays().remove(roadOverlay);
         roadOverlay = null;
-        navRoad = null;
+        // only reset object if nav with recording not true, otherwise this is done in onClickListener
+        if (!navWithRecording) {
+            navRoad = null;
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -396,9 +400,12 @@ public class MainActivity extends BaseActivity
                 unbindService(mRecorderServiceConnection);
                 stopService(recService);
                 recording = false;
+                boolean usedNav = navRoad != null;
+                // reset nav road
+                navRoad = null;
                 if (mBoundRecorderService.getRecordingAllowed()) {
                     ShowRouteActivity.startShowRouteActivity(mBoundRecorderService.getCurrentRideKey(),
-                            MetaData.STATE.JUST_RECORDED, true, this);
+                            MetaData.STATE.JUST_RECORDED, true, usedNav, this);
                 } else {
                     new AlertDialog.Builder(MainActivity.this)
                             .setMessage(getString(R.string.errorRideNotRecorded))

@@ -10,8 +10,9 @@ public class MetaDataEntry {
     public Long distance;
     public Integer numberOfScaryIncidents;
     public Integer region;
+    public boolean usedNav;
 
-    public MetaDataEntry(Integer rideId, Long startTime, Long endTime, Integer state, Integer numberOfIncidents, Long waitedTime, Long distance, Integer numberOfScaryIncidents, Integer region) {
+    public MetaDataEntry(Integer rideId, Long startTime, Long endTime, Integer state, Integer numberOfIncidents, Long waitedTime, Long distance, Integer numberOfScaryIncidents, Integer region, boolean usedNav) {
         this.rideId = rideId;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -21,6 +22,7 @@ public class MetaDataEntry {
         this.distance = distance != null ? distance : 0;
         this.numberOfScaryIncidents = numberOfScaryIncidents != null ? numberOfScaryIncidents : 0;
         this.region = region != null ? region : 0;
+        this.usedNav = usedNav;
     }
 
     public static MetaDataEntry parseEntryFromLine(String string) {
@@ -34,7 +36,8 @@ public class MetaDataEntry {
                 Long.parseLong(dataLogLine[5]),
                 Long.parseLong(dataLogLine[6]),
                 Integer.parseInt(dataLogLine[7]),
-                Integer.parseInt(dataLogLine[8])
+                Integer.parseInt(dataLogLine[8]),
+                Boolean.parseBoolean(dataLogLine[9])
         );
     }
 
@@ -45,6 +48,6 @@ public class MetaDataEntry {
      * @return Log Line without new line separator
      */
     public String stringifyMetaDataEntry() {
-        return rideId + "," + startTime + "," + endTime + "," + state + "," + numberOfIncidents + "," + waitedTime + "," + distance + "," + numberOfScaryIncidents + "," + region;
+        return rideId + "," + startTime + "," + endTime + "," + state + "," + numberOfIncidents + "," + waitedTime + "," + distance + "," + numberOfScaryIncidents + "," + region + "," + usedNav;
     }
 }

@@ -25,7 +25,7 @@ import de.tuberlin.mcc.simra.app.util.Utils;
  * // * one meta file per user, so we only want to create it if it doesn't exist yet.
  */
 public class MetaData {
-    public final static String METADATA_HEADER = "key,startTime,endTime,state,numberOfIncidents,waitedTime,distance,numberOfScary,region";
+    public final static String METADATA_HEADER = "key,startTime,endTime,state,numberOfIncidents,waitedTime,distance,numberOfScary,region,usedNav";
     private Map<Integer, MetaDataEntry> metaDataEntries;
 
     public MetaData(Map<Integer, MetaDataEntry> metaDataEntries) {
