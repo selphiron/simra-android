@@ -81,9 +81,9 @@ under the git branch `profile_extension`.
 
 The branch named `profile_extension` contains 3 new columns in the .csv file:
 
-safetyWeighting - integer representing the user preference for the safety score weighting
-surfaceWeighting - integer representing the user preference for the surface quality weighting
-usesSimraSurface - boolean representing the user preference for using SimRa surface quality data
+- safetyWeighting - integer representing the user preference for the safety score weighting
+- surfaceWeighting - integer representing the user preference for the surface quality weighting
+- usesSimraSurface - boolean representing the user preference for using SimRa surface quality data
 
 ### Extension of Metadata
 
