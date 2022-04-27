@@ -119,8 +119,9 @@ public class SimraNavService extends GraphHopperRoadManager {
     @Override
     public SimraRoad[] getRoads(ArrayList<GeoPoint> waypoints, boolean getAlternate) {
         try {
+            // query the routing api
             JSONObject jRoot = fetchRoute(waypoints);
-            Log.d(TAG, "GraphHopper response: " + jRoot.toString());
+            Log.d(TAG, "Simra-Nav response: " + jRoot.toString());
             JSONArray jPaths = jRoot.optJSONArray("paths");
             if (jPaths == null || jPaths.length() == 0) {
                 SimraRoad[] defaultRoad = this.defaultRoad(waypoints);
@@ -137,6 +138,7 @@ public class SimraNavService extends GraphHopperRoadManager {
                 road.mRouteHigh = PolylineEncoder.decode(route_geometry, 10, mWithElevation);
                 JSONArray jInstructions = jPath.getJSONArray("instructions");
                 int n = jInstructions.length();
+                // parse instructions for nodes
                 for (int i = 0; i < n; i++) {
                     JSONObject jInstruction = jInstructions.getJSONObject(i);
                     RoadNode node = new RoadNode();

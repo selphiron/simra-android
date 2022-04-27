@@ -79,6 +79,11 @@ public class RoadUtil {
         return roadOverlay;
     }
 
+    /**
+     * Paints the road in a specific color scheme depending on the score type
+     *
+     * @param scoreType the score type, representing either a default scheme, safety or surface (osm/simra) scores
+     */
     public void paintRoad(ScoreColorList.ScoreType scoreType) {
         Log.d(TAG, "overlay items: " + mapView.getOverlays().size());
         roadOverlay.getOutlinePaintLists().clear();

@@ -381,6 +381,13 @@ public class NavigationActivity extends BaseActivity {
         }
     }
 
+    /**
+     * Adds a marker to the map.
+     *
+     * @param point      geopoint representing the marker location
+     * @param markerType marker type (start, via point, destination)
+     * @param address    address string of the marker, displayed in an info window
+     */
     private void addMarker(GeoPoint point, PointType markerType, String address) {
         Marker marker = new Marker(mapView);
         marker.setPosition(point);
