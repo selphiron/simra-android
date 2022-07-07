@@ -449,6 +449,7 @@ public class NavigationActivity extends BaseActivity {
      * @param textView    AutoCompleteTextView to fill options for
      */
     private void getAddresses(String searchEntry, AutoCompleteTextView textView) {
+        Log.d(TAG, "getAddresses(" + searchEntry + ")");
         try {
             List<Address> results = new ReverseGeocoderTask().execute(searchEntry).get();
             List<AddressPair> resultPairs = new ArrayList<>();
@@ -498,6 +499,7 @@ public class NavigationActivity extends BaseActivity {
         protected List<Address> doInBackground(String... strings) {
             String query = strings[0];
             try {
+                Log.d(TAG, "geocoderNominatim.getFromLocationName: " +  Arrays.toString(geocoderNominatim.getFromLocationName(query, 3).toArray()));
                 return geocoderNominatim.getFromLocationName(query, 3);
             } catch (IOException e) {
                 e.printStackTrace();
