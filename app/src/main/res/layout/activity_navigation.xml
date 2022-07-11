@@ -75,34 +75,103 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/selectPreviousRoutesButton">
 
-            <AutoCompleteTextView
-                android:id="@+id/startLocation"
-                android:layout_width="fill_parent"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/select_start"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:minHeight="48dp" />
+                android:background="@android:color/transparent">
 
-            <AutoCompleteTextView
-                android:id="@+id/viaLocation"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="@string/via"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:minHeight="48dp" />
+                <AutoCompleteTextView
+                    android:id="@+id/startLocation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:hint="@string/select_start"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:minHeight="48dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/selectCurrentLocationAsStartButton"
+                    app:layout_constraintStart_toStartOf="parent" />
 
-            <AutoCompleteTextView
-                android:id="@+id/destinationLocation"
-                android:layout_width="fill_parent"
+                <ImageButton
+                    android:id="@+id/selectCurrentLocationAsStartButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:drawable/ic_menu_mylocation"
+                    android:backgroundTint="#000000"
+                    android:layout_gravity="center"
+                    app:layout_constraintLeft_toRightOf="@id/startLocation"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+
+                    />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="@string/select_destination"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:minHeight="48dp" />
+                android:background="@android:color/transparent">
+
+                <AutoCompleteTextView
+                    android:id="@+id/viaLocation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:hint="@string/via"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:minHeight="48dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/selectCurrentLocationAsViaButton"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <ImageButton
+                    android:id="@+id/selectCurrentLocationAsViaButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:drawable/ic_menu_mylocation"
+                    android:backgroundTint="#000000"
+                    android:layout_gravity="center"
+                    app:layout_constraintLeft_toRightOf="@id/viaLocation"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent">
+                <AutoCompleteTextView
+                    android:id="@+id/destinationLocation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:hint="@string/select_destination"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:minHeight="48dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/selectCurrentLocationAsDestinationButton"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <ImageButton
+                    android:id="@+id/selectCurrentLocationAsDestinationButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:drawable/ic_menu_mylocation"
+                    android:backgroundTint="#000000"
+                    android:layout_gravity="center"
+                    app:layout_constraintLeft_toRightOf="@id/destinationLocation"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
         </LinearLayout>
 
         <TextView

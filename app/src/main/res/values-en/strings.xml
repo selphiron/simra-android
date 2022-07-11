@@ -388,6 +388,7 @@
     <string name="get_route">Get route</string>
     <string name="location_selected">Location selected</string>
     <string name="navigate_from">Navigate from this point</string>
+    <string name="navigate_via">Navigate via this point</string>
     <string name="navigate_to">Navigate to this point</string>
     <string name="navigation_settings_title">Navigation Settings</string>
     <string name="safety_score_seekbar_hint">Safety score weighting (higher means more importance)</string>

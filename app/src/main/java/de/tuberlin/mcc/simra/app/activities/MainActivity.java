@@ -955,18 +955,25 @@ public class MainActivity extends BaseActivity
             if (navRoad == null) {
                 final AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
                 alert.setTitle(R.string.location_selected);
-                alert.setNegativeButton(R.string.navigate_to, (dialog, whichButton) -> {
+                alert.setPositiveButton(R.string.navigate_to, (dialog, whichButton) -> {
                     Intent i = new Intent(MainActivity.this, NavigationActivity.class);
                     i.putExtra("lat", p.getLatitude());
                     i.putExtra("lon", p.getLongitude());
-                    i.putExtra("isStart", false);
+                    i.putExtra("mode", NavigationActivity.PointType.DESTINATION);
                     startActivityForResult(i, REQUEST_NAV);
                 });
-                alert.setPositiveButton(R.string.navigate_from, (dialog, whichButton) -> {
+                alert.setNegativeButton(R.string.navigate_via, (dialog, whichButton) -> {
                     Intent i = new Intent(MainActivity.this, NavigationActivity.class);
                     i.putExtra("lat", p.getLatitude());
                     i.putExtra("lon", p.getLongitude());
-                    i.putExtra("isStart", true);
+                    i.putExtra("mode", NavigationActivity.PointType.VIA);
+                    startActivityForResult(i, REQUEST_NAV);
+                });
+                alert.setNeutralButton(R.string.navigate_from, (dialog, whichButton) -> {
+                    Intent i = new Intent(MainActivity.this, NavigationActivity.class);
+                    i.putExtra("lat", p.getLatitude());
+                    i.putExtra("lon", p.getLongitude());
+                    i.putExtra("mode", NavigationActivity.PointType.START);
                     startActivityForResult(i, REQUEST_NAV);
                 });
                 alert.show();

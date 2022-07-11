@@ -84,7 +84,7 @@ public class NavigationActivity extends BaseActivity {
     protected Polyline[] mRoadOverlays; // list of road overlays showing routes
     protected FolderOverlay mRoadNodeMarkers; // folder containing markers of road overlay
 
-    private enum PointType {START, VIA, END}
+    public enum PointType {START, VIA, DESTINATION}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,32 +121,41 @@ public class NavigationActivity extends BaseActivity {
         mapController = (MapController) mapView.getController();
         mapController.setZoom(ZOOM_LEVEL);
 
+
+        // handlers for delayed geocoder fetching
+        Handler startHandler = getAutocompleteHandler(binding.startLocation);
+        Handler viaHandler = getAutocompleteHandler(binding.viaLocation);
+        Handler toHandler = getAutocompleteHandler(binding.destinationLocation);
+
+        // set up adapters and autocomplete views
+        binding.startLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
+        binding.startLocation.setOnItemClickListener((parent, view, position, id) -> {
+            handleSuggestionClick(parent, position, PointType.START);
+        });
+        binding.startLocation.addTextChangedListener(getAutocompleteTextWatcher(startHandler));
+
+        binding.viaLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
+        binding.viaLocation.setOnItemClickListener((parent, view, position, id) ->
+                handleSuggestionClick(parent, position, PointType.VIA));
+        binding.viaLocation.addTextChangedListener(getAutocompleteTextWatcher(viaHandler));
+
+        binding.destinationLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
+        binding.destinationLocation.setOnItemClickListener((parent, view, position, id) ->
+                handleSuggestionClick(parent, position, PointType.DESTINATION));
+        binding.destinationLocation.addTextChangedListener(getAutocompleteTextWatcher(toHandler));
+
         // if opened from map selection, set data (start/destination location)
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             double lat = extras.getDouble("lat");
             double lon = extras.getDouble("lon");
+            PointType mode = (PointType) extras.get("mode");
             GeoPoint selectedPoint = new GeoPoint(lat, lon);
-            try {
-                String address = new GeocoderTask().execute(selectedPoint).get();
-                boolean isStart = extras.getBoolean("isStart");
-                if (isStart) {
-                    binding.startLocation.setText(address);
-                    fromCoordinates = selectedPoint;
-                } else {
-                    binding.destinationLocation.setText(address);
-                    toCoordinates = selectedPoint;
-                }
-                updateSearchUiWithPoint(selectedPoint, address);
-            } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
+            updateSearchUIMode(selectedPoint, mode);
         } else {
             // animate to last known location for initial view if no points selected
-            SharedPreferences sharedPrefs = getSharedPreferences("simraPrefs", Context.MODE_PRIVATE);
-            if (sharedPrefs.contains("lastLoc_latitude") & sharedPrefs.contains("lastLoc_longitude")) {
-                GeoPoint lastLoc = new GeoPoint(Double.parseDouble(sharedPrefs.getString("lastLoc_latitude", "")),
-                        Double.parseDouble(sharedPrefs.getString("lastLoc_longitude", "")));
+            GeoPoint lastLoc = getActualLocation();
+            if (lastLoc != null){
                 mapController.animateTo(lastLoc);
             }
         }
@@ -243,27 +252,26 @@ public class NavigationActivity extends BaseActivity {
             }
         });
 
-        // handlers for delayed geocoder fetching
-        Handler startHandler = getAutocompleteHandler(binding.startLocation);
-        Handler viaHandler = getAutocompleteHandler(binding.viaLocation);
-        Handler toHandler = getAutocompleteHandler(binding.destinationLocation);
-
-        // set up adapters and autocomplete views
-        binding.startLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
-        binding.startLocation.setOnItemClickListener((parent, view, position, id) -> {
-            handleSuggestionClick(parent, position, PointType.START);
+        // listener for selecting current location as start
+        binding.selectCurrentLocationAsStartButton.setOnClickListener(v -> {
+            getActualLocation();
+            updateSearchUIMode(getActualLocation(), PointType.START);
+            updateButtonEnabled();
         });
-        binding.startLocation.addTextChangedListener(getAutocompleteTextWatcher(startHandler));
 
-        binding.viaLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
-        binding.viaLocation.setOnItemClickListener((parent, view, position, id) ->
-                handleSuggestionClick(parent, position, PointType.VIA));
-        binding.viaLocation.addTextChangedListener(getAutocompleteTextWatcher(viaHandler));
+        // listener for selecting current location as via
+        binding.selectCurrentLocationAsViaButton.setOnClickListener(v -> {
+            getActualLocation();
+            updateSearchUIMode(getActualLocation(), PointType.VIA);
+        });
 
-        binding.destinationLocation.setAdapter(new AutocompleteAdapter(this, android.R.layout.simple_dropdown_item_1line));
-        binding.destinationLocation.setOnItemClickListener((parent, view, position, id) ->
-                handleSuggestionClick(parent, position, PointType.END));
-        binding.destinationLocation.addTextChangedListener(getAutocompleteTextWatcher(toHandler));
+        // listener for selecting current location as destination
+        binding.selectCurrentLocationAsDestinationButton.setOnClickListener(v -> {
+            getActualLocation();
+            updateSearchUIMode(getActualLocation(), PointType.DESTINATION);
+            updateButtonEnabled();
+        });
+
 
         // add road markers folder to map view
         mRoadNodeMarkers = new FolderOverlay();
@@ -325,13 +333,16 @@ public class NavigationActivity extends BaseActivity {
             case START:
                 fromCoordinates = coordinates;
                 updateButtonEnabled();
+                binding.startLocation.setSelection(0);
                 break;
-            case END:
+            case DESTINATION:
                 toCoordinates = coordinates;
                 updateButtonEnabled();
+                binding.destinationLocation.setSelection(0);
                 break;
             default:
                 viaCoordinates = coordinates;
+                binding.viaLocation.setSelection(0);
                 break;
         }
         updateSearchUiWithPoint(coordinates, item.toString());
@@ -370,12 +381,12 @@ public class NavigationActivity extends BaseActivity {
         }
         if (toCoordinates != null) {
             pointList.add(toCoordinates);
-            addMarker(toCoordinates, PointType.END, address);
+            addMarker(toCoordinates, PointType.DESTINATION, address);
         }
         // zoom to bounding box containing all points
         if (pointList.size() > 1) {
             BoundingBox boundingBox = BoundingBox.fromGeoPointsSafe(pointList);
-            mapView.zoomToBoundingBox(boundingBox, true);
+            mapView.zoomToBoundingBox(boundingBox, true,binding.map.getWidth()/10);
         } else {
             mapController.animateTo(point);
         }
@@ -398,7 +409,7 @@ public class NavigationActivity extends BaseActivity {
             case START:
                 color = R.color.startGreen;
                 break;
-            case END:
+            case DESTINATION:
                 color = R.color.endRed;
                 break;
             default:
@@ -552,12 +563,18 @@ public class NavigationActivity extends BaseActivity {
             binding.cancelButton.setVisibility(View.VISIBLE);
             binding.routeVisualizerSelector.setVisibility(View.VISIBLE);
             binding.selectPreviousRoutesButton.setVisibility(View.INVISIBLE);
+            binding.selectCurrentLocationAsStartButton.setVisibility(View.INVISIBLE);
+            binding.selectCurrentLocationAsViaButton.setVisibility(View.INVISIBLE);
+            binding.selectCurrentLocationAsDestinationButton.setVisibility(View.INVISIBLE);
         } else {
             binding.getRouteBtn.setVisibility(View.VISIBLE);
             binding.startNavigationBtn.setVisibility(View.GONE);
             binding.cancelButton.setVisibility(View.GONE);
             binding.routeVisualizerSelector.setVisibility(View.GONE);
             binding.selectPreviousRoutesButton.setVisibility(View.VISIBLE);
+            binding.selectCurrentLocationAsStartButton.setVisibility(View.VISIBLE);
+            binding.selectCurrentLocationAsViaButton.setVisibility(View.VISIBLE);
+            binding.selectCurrentLocationAsDestinationButton.setVisibility(View.VISIBLE);
             // reset route information values
             binding.durationText.setText(null);
             mRoadNodeMarkers.getItems().clear();
@@ -576,14 +593,64 @@ public class NavigationActivity extends BaseActivity {
      * @return address string
      */
     private String addressToString(Address address) {
+        /*Log.d(TAG, "address.getThoroughfare(): " + address.getThoroughfare());
+        Log.d(TAG, "address.getSubThoroughfare(): " + address.getSubThoroughfare());
+        Log.d(TAG, "address.getPostalCode(): " + address.getPostalCode());
+        Log.d(TAG, "address.getLocality(): " + address.getLocality());
+        Log.d(TAG, "address.getCountryName(): " + address.getCountryName());
+        Log.d(TAG, "display_name: " + address.getExtras().getString("display_name", "error"));*/
+        return (address.getThoroughfare() + ", " + address.getSubThoroughfare() + ", " + address.getPostalCode() + ", " + address.getLocality() + ", " + address.getCountryName());
+        /*return address.getExtras().getString("display_name", "error");
+        Log.d(TAG, "address.getExtras(): " + address.getExtras().toString());
         StringBuilder addressBuilder = new StringBuilder();
         int maxLines = address.getMaxAddressLineIndex();
+        Log.d(TAG, "house number before adding: " + address.getSubThoroughfare());
+        address.setSubThoroughfare(address.getExtras().getString("display_name", "error"));
+        Log.d(TAG, "house number after adding: " + address.getSubThoroughfare());
         for (int i = 0; i <= maxLines; i++) {
             if (i != 0) {
                 addressBuilder.append(", ");
             }
             addressBuilder.append(address.getAddressLine(i));
         }
-        return addressBuilder.toString();
+        Log.d(TAG, "addressToString return: " + addressBuilder.toString());
+        return addressBuilder.toString();*/
     }
+
+    private GeoPoint getActualLocation() {
+        SharedPreferences sharedPrefs = getSharedPreferences("simraPrefs", Context.MODE_PRIVATE);
+        GeoPoint lastLocation = null;
+        if (sharedPrefs.contains("lastLoc_latitude") & sharedPrefs.contains("lastLoc_longitude")) {
+            lastLocation = new GeoPoint(Double.parseDouble(sharedPrefs.getString("lastLoc_latitude", "")),
+                    Double.parseDouble(sharedPrefs.getString("lastLoc_longitude", "")));
+
+        }
+        return lastLocation;
+    }
+
+    private void updateSearchUIMode(GeoPoint point, PointType mode) {
+
+        try {
+            String address = new GeocoderTask().execute(point).get();
+            switch (mode) {
+                case START:
+                    binding.startLocation.setText(address);
+                    fromCoordinates = point;
+                    break;
+                case DESTINATION:
+                    binding.destinationLocation.setText(address);
+                    toCoordinates = point;
+                    break;
+                default:
+                    binding.viaLocation.setText(address);
+                    viaCoordinates = point;
+                    break;
+            }
+            updateSearchUiWithPoint(point, address);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

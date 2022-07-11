@@ -404,6 +404,7 @@
     <string name="get_route">Route berechnen</string>
     <string name="location_selected">Standort ausgewählt</string>
     <string name="navigate_from">Route von diesem Punkt</string>
+    <string name="navigate_via">Route über diesen Punkt</string>
     <string name="navigate_to">Route zu diesem Punkt</string>
     <string name="navigation_settings_title">Navigationseinstellungen</string>
     <string name="safety_score_seekbar_hint">SimRa Safety-Score Gewichtung (höher ist stärker)</string>
